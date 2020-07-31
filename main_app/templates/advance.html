@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<script>
+    pageName = "nav-adv"
+</script>
+{% if user.is_authenticated %}
+<form method="post" class="form-inline">
+    {% csrf_token %}
+    <div class="form-group mx-sm-2 mb-2">
+        <label class="control-label">วัน &nbsp;</label>
+        <input class="form-control" type="text" id="day" name="day" size="6" placeholder="M W" required> 
+    </div>
+    <div class="form-group mx-sm-2 mb-2">
+        <label class="control-label">เวลา &nbsp;</label>
+        <input class="form-control" type="text" id="time" name="time" size="10" placeholder="13-14.30" required>
+    </div>
+    <div class="form-group mx-sm-2 mb-2">
+        <label class="control-label">จำนวนนิสิต &nbsp;</label>
+        <input class="form-control" type="text" id="st_amount" name="st_amount" size="2" required>
+    </div>
+    <div class="form-group mx-sm-2 mb-2">
+    <label>Semester :&nbsp;</label>
+    <select  id="sem" name="sem" class="custom-select">
+        {% for sem in semester %}
+            <option value='{{sem}}'>{{ sem }}</option>
+        {% endfor %}
+    </select>
+    </div>
+    <button class="btn btn-primary mb-2" type="submit">Search</button>
+
+  </form>
+
+  {% if prev_data %}
+  <script>
+  prev_data = {{prev_data|safe}}
+  document.getElementById("day").value = prev_data["day"]
+  document.getElementById("time").value = prev_data["time"]
+  document.getElementById("st_amount").value = prev_data["st_amount"]
+  document.getElementById("sem").value = prev_data["sem"]
+  </script>
+{% endif %}
+
+  {% if data is not null %}
+  <h3>&nbsp;&nbsp;&nbsp;วัน {{info_data.day}} เวลา {{info_data.time}}</h3>
+  {% endif %}
+  {% for i in data %}
+   <h5 class="mx-3 mb-2">{{i}}</h5>
+  {% endfor %}
+
+  {% else %}
+  <p>Please login to see this page.</p>
+ <script>
+     //alert("Please login to access this page")
+     location.replace("accounts/login")
+ </script>
+  
+
+{% endif %}
+{% endblock content %}

@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% if user.is_authenticated %}
+<script>
+    pageName = "nav-sum"
+</script>
+
+<h4> สรุปภาระงาน</h4>
+
+<form method="post" class="form-inline">
+    {% csrf_token %}
+    <div class="form-group mx-sm-3 mb-2">
+        <label class="control-label">อาจารย์ &nbsp;</label>
+    <select class="form-control" id="lecturer" name="lecturer">
+            <option value="all">ทั้งหมด</option>
+        {% for lec in teacher|dictsort:"lecturer_name" %}
+            <option value="{{lec.lecturer_id}}">{{ lec }}</option>
+        {% endfor %}
+    </select>
+    </div>
+<div class="form-group mx-sm-3 mb-2">
+    <label class="control-label">ปี &nbsp;</label>
+    <input class="form-control" type="text" id="year" name="year" size="5" required>
+</div>
+<div class="form-group mx-sm mb-2">
+    <label class="control-label">ภาค &nbsp;</label>
+<select id="term" class="custom-select" name="term">
+    <option value="all">ทุกภาคการศึกษา</option>
+    <option value="1">ภาคต้น</option>
+    <option value="2">ภาคปลาย</option>
+    <option value="3">ภาคฤดูร้อน</option>
+</select>
+</div>
+<div class="form-group mx-sm-3 mb-2">
+    <label class="control-label">หมู่ &nbsp;</label>
+    <select class="form-control" id="group" name="group">
+        <option value="all">ทั้งหมด</option>
+        <option value="normal">ภาคปกติ</option>
+        <option value="special">ภาคพิเศษ</option>
+        <option value="iup">IUP</option>
+    </select>
+</div>
+    <button class="btn btn-primary mb-2" type="submit">Search</button>
+
+  </form>
+
+{% if prev_data %}
+    <script>
+    prev_data = {{prev_data|safe}}
+    document.getElementById("lecturer").value = prev_data["lecturer"]
+    document.getElementById("group").value = prev_data["group"]
+    document.getElementById("term").value = prev_data["term"]
+    document.getElementById("year").value = prev_data["year"]
+    </script>
+{% endif %}
+
+
+  <table class="table table-bordered table-sm table-fixed" id ="sum_table">
+    <tr>
+        <td>ผู้สอน</td>
+        <td>รหัสวิชา</td>
+        <td>ชื่อวิชา</td>
+        <td>หมู่</td>
+        <td>หน่วยกิต</td>
+        <td>ภาค</td>
+        <td>วันเวลา</td>
+        <td>ห้อง</td>
+        <td>สาขา-ปี (จำนวน)</td>
+    </tr>
+    {% if mode is 0 %}
+        {% for i in data %}
+        <tr>
+            <td class="lec_name">{{i.lecturer|safe}}</td>
+            <td>{{i.code|safe}}</td>
+            <td>{{i.name|safe}}</td>
+            <td>{{i.sec|safe}}</td>
+            <td>{{i.credit|safe}}</td>
+            <td>{{i.term|safe}}</td>
+            <td>{{i.day|safe}} {{i.time|safe}} {{i.day2|safe}} {{i.time2|safe}}</td>
+            <td>{{i.room|safe}} {{i.room2|safe}}</td>
+            <td>{{i.student_type|safe}} ({{i.amount|safe}})</td>
+        </tr>
+        {% endfor %}
+        <script>
+            lnn = {{length_data|safe}};
+            lec_tab = '{{table_lec|safe}}'
+            lec_name = document.getElementsByClassName('lec_name')
+            lec_name[0].rowSpan = lnn
+            lec_name[0].innerText = lec_tab
+            for(i=1;i<lnn;i++){
+                lec_name[1].remove()
+            } 
+        </script>
+        
+    {% elif mode is 1 %}
+        {% for sub_data in data %}
+            {% for i in sub_data %}
+            <tr>
+                <td class="lec_name">{{i.lecturer|safe}}</td>
+                <td>{{i.code|safe}}</td>
+                <td>{{i.name|safe}}</td>
+                <td>{{i.sec|safe}}</td>
+                <td>{{i.credit|safe}}</td>
+                <td>{{i.term|safe}}</td>
+                <td>{{i.day|safe}} {{i.time|safe}} {{i.day2|safe}} {{i.time2|safe}}</td>
+                <td>{{i.room|safe}} {{i.room2|safe}}</td>
+                <td>{{i.student_type|safe}} ({{i.amount|safe}})</td>
+            </tr>
+            {% endfor %}
+        {% endfor %}
+        <script>
+            lnn = {{length_data|safe}};
+            lec_tab = {{table_lec|safe}}
+            lec_name = document.getElementsByClassName('lec_name')
+            for(i=0;i<lnn.length;i++){
+                lec_name[i].rowSpan = lnn[i]
+                lec_name[i].innerText = lec_tab[i]
+                for(j=1;j<lnn[i];j++){
+                    lec_name[i+1].remove()
+                }
+            }
+        </script>
+    {% endif %}
+</table>
+{% else %}
+<p>Please login to see this page.</p>
+<script>
+   //alert("Please login to access this page")
+   location.replace("accounts/login")
+</script>
+
+
+{% endif %}
+
+{% endblock content %}

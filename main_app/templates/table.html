@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% load static %}
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style> 
+.box-container{
+    width: 1680px;
+    display: inline-block;
+}
+    .boxHead{
+      width: 120px;
+      height: 80px;
+      text-align:center;
+      border: 1px solid blue;
+      line-height: 60px;
+      
+      
+    }
+    .boxSub{
+      width: 60px;
+      height: 80px;
+      text-align:center;
+      border: 1px dotted gray;
+      font-size: 12px;
+      
+    }
+    .blinking{
+    animation:blinkingText 1.2s infinite;
+}
+    @keyframes blinkingText{
+    0%{     color: rgb(255, 0, 0); ;    }
+    49%{    color: rgb(255, 0, 0); ; }
+    60%{    color: transparent; }
+    99%{    color:transparent;  }
+    100%{   color: rgb(255, 0, 0);    }
+}
+
+    </style>
+    <a href="{% url 'main_page' %}">Back</a>
+    <h1 >ตาราง {{group}}</h1>
+    <h2 id="conflict-alert" class="blinking"></h2>
+<div class="box-container" id = "tab_main">
+
+</div>
+
+<script>
+    BOX_WIDTH = 60
+    BOX_HIGHT = 80
+    conflictCheck = false
+    table_mode = "{{mode|safe}}"
+    table_group = "{{group|safe}}"
+    var         time_list = ['','8.00-9.00','9.00-10.00','10.00-11.00','11.00-12.00','12.00-13.00',
+                    '13.00-14.00','14.00-15.00','15.00-16.00','16.00-17.00','17.00-18.00'
+                    ,'18.00-19.00','19.00-20.00','20.00-21.00']
+    var i;
+    table_id = document.getElementById("tab_main")
+    temp_str = ""
+    temp_str+='<div class="row">'
+    for(i=0;i<time_list.length;i++){
+        temp_str+='<div class="boxHead" >'+time_list[i]+'</div>'
+    }
+    temp_str += '</div>'
+    table_id.innerHTML += temp_str
+
+    day_data = {{day_data_list|safe}}
+
+    function addrow(num_row,rowText){
+        var i
+        temp_str = ""
+        temp_str += '<div class="row" id=row'+String(num_row)+'>'
+        for(i=0;i< time_list.length*2-1;i++){
+            if(i==0) {
+                temp_str += '<div class="boxHead" id = row'+String(num_row)+'-'+String(i)+'>'+rowText+'</div>'
+                continue;
+            }
+            temp_str += '<div class="boxSub"  id = row'+String(num_row)+'-'+String(i)+'></div>'
+        }
+        table_id.innerHTML += temp_str
+        lastRow ++  
+    }
+    function fillTime(num_row,sub_data,day_text){
+        var i
+        timeSplit = sub_data['time'].split('-')
+        if(timeSplit.length<=1) return false;
+        //Convert 8.00-19.00 to 1-23
+        for(i=0;i<2;i++){
+            timeSplit[i] = parseFloat(timeSplit[i])
+            if((timeSplit[i]*10)%10 == 3) timeSplit[i] += 0.2;
+            timeSplit[i] = parseInt(((timeSplit[i]-8)*2)+1)
+        }
+       fillTab(timeSplit,num_row,sub_data,day_text)
+    }
+    function fillTab(timeSplit,num_row,sub_data,day_text){
+        var cur_row_id = 'row'+String(num_row)
+        var cur_row = document.getElementById(cur_row_id)
+        for(i=timeSplit[0] ; i<timeSplit[1] ; i++){
+            var cur_col_id = cur_row_id+'-'+String(i)
+            let cur_col = document.getElementById(cur_col_id)
+            if(cur_col == null){
+                conflictCheck = true
+                if(document.getElementById('row'+String(num_row+1))==null) addrow(num_row+1,day_text);
+                fillTab(timeSplit,num_row+1,sub_data)
+                return;
+            }
+            if(cur_col.innerText==null){
+                conflictCheck = true
+                if(document.getElementById('row'+String(num_row+1))==null) addrow(num_row+1,day_text);
+                fillTab(timeSplit,num_row+1,sub_data)
+                return;
+            }
+            else if(cur_col.innerText!= ""){
+                conflictCheck = true
+                if(document.getElementById('row'+String(num_row+1))==null) addrow(num_row+1,day_text);
+                fillTab(timeSplit,num_row+1,sub_data)
+                return;
+            }
+        }
+        timeDiff = timeSplit[1]-timeSplit[0]
+        for(i=timeSplit[0] ; i<timeSplit[1] ; i++){
+            var cur_col_id = cur_row_id+'-'+String(i)
+            var cur_col = document.getElementById(cur_col_id)
+            
+            if(i==timeSplit[0]){
+                cur_col.style.width = ''+String(timeDiff*BOX_WIDTH)+'px'
+                cur_col.innerHTML += sub_data['code']+' sec: '+sub_data["sec"]+'<br><small>'+sub_data["name"]+
+                                    '<br>'+sub_data["lecturer"]+' '+sub_data["room"]+'</small>';
+                cur_col.style.border = "2px solid black"
+                if(sub_data["student_type"].search('XE') != -1){
+                    cur_col.style.backgroundColor = "rgb(253, 255, 154)"
+                }
+                else if(sub_data["sec"].length < 3){
+                    cur_col.style.backgroundColor = "cyan"
+                }
+                else if(sub_data["sec"][0]==2){
+                    cur_col.style.backgroundColor = "lightgreen"
+                }
+                else if(sub_data["sec"][0] == 4){
+                    cur_col.style.backgroundColor = "pink"
+                }
+            }
+            else {
+                cur_col.remove()
+            }
+        }
+    }
+    var lastRow = 0;
+    day_dict = {0:'Monday',1:'Tuesday',2:'Wednesday',3:'Thursday',4:'Friday'}
+    for(n_day = 0;n_day<day_data.length;n_day++){
+        addrow(lastRow+1,day_dict[n_day])
+        currRow = lastRow
+        for(n_sub=0;n_sub<day_data[n_day].length;n_sub++){
+            fillTime(lastRow, day_data[n_day][n_sub] ,day_dict[n_day])
+        }
+        document.getElementById('row'+String(currRow)+'-0').style.borderBottomStyle = "None"
+        for(rowdel=currRow+1;rowdel<=lastRow;rowdel++){
+            if(rowdel!=lastRow) document.getElementById('row'+String(rowdel)+'-0').style.borderBottomStyle = "None";
+            document.getElementById('row'+String(rowdel)+'-0').style.borderTopStyle = "None"
+            document.getElementById('row'+String(rowdel)+'-0').innerText=""
+        }
+        document.getElementById('row'+String(currRow)+'-0').style.lineHeight = String(BOX_HIGHT*(lastRow-currRow+1))+"px"
+    }
+    document.getElementById("row"+String(currRow)+'-0').style.borderBottom = "1px solid blue"
+
+</script>
+<br></br>
+<table>
+<tr><td><div style="width: 20px; height: 20px; border: 1px solid black; background-color: cyan;"></div></td>
+<td>ภาคปกติ</td>
+<td></td>
+<td><div style="width: 20px; height: 20px; border: 1px solid black; background-color:lightgreen;"></div></td>
+<td>ภาคพิเศษ</td>
+<td></td>
+<td><div style="width: 20px; height: 20px; border: 1px solid black; background-color: pink;"></div></td>
+<td>IUP</td>
+<td><div style="width: 20px; height: 20px; border: 1px solid black; background-color: rgb(253, 255, 154);"></div></td>
+<td>ป.โท-เอก</td>
+<tr>
+</table>
+<br></br>
+<table class = "table table-bordered table-sm small table-fixed">
+    <thead><tr>
+        <td>รหัสวิชา</td>
+        <td>ชื่อวิชา</td>
+        <td>หมู่เรียน</td>
+        <td>อาจารย์ผู้สอน</td>
+        <td>จำนวน</td>
+        <td>กลุ่มนิสิต</td>
+        <td>วัน-เวลา</td>
+        <td>ห้อง</td>
+    </tr></thead>
+    {% for i in table_data%}
+    <tr>
+        <td>{{i.code|safe}}</td>
+        <td>{{i.name|safe}}</td>
+        <td>{{i.sec|safe}}</td>
+        <td>อ. {{i.lecturer|safe}}</td>
+        <td>{{i.amount|safe}}</td>
+        <td>{{i.student_type|safe}}</td>
+        <td>{{i.day|safe}} {{i.time|safe}} {{i.day2|safe}} {{i.time2|safe}}</td>
+        <td>{{i.room|safe}} {{i.room2|safe}}</td>
+    </tr>
+    {% endfor %}
+</table>
+<script>
+    if(table_mode=='room' && conflictCheck == true){
+        document.getElementById("conflict-alert").innerText = table_group + "มีการทับซ้อนของตารางเรียน"
+    }
+    else if(table_mode=='teacher' && conflictCheck == true){
+        document.getElementById("conflict-alert").innerText = table_group + "มีการทับซ้อนของตารางเรียน"
+    }
+</script>
+
+{% endblock content %}

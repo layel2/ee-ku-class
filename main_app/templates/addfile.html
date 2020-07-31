@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<script>
+    success = "{{success}}"
+    if(success == "yes"){
+        alert("Upload complete")
+    }
+    pageName = "nav-add"
+</script>
+{% if user.is_authenticated %}
+<form method="post" class="form-inline" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="form-group mx-sm-3 mb-2">
+        <label class="control-label">ภาคการศึกษา &nbsp;</label>
+    <select id="term" class="custom-select" name="term">
+        <option value="1">ภาคต้น</option>
+        <option value="2">ภาคปลาย</option>
+        <option value="3">ภาคฤดูร้อน</option>
+    </select>
+</div>
+<div class="form-group mx-sm-3 mb-2">
+    <label class="control-label">ปี &nbsp;</label>
+    <input class="form-control" type="text" id="year" name="year" size="5" required>
+</div>
+    <input class="form-group mx-sm-2 mb-2" type="file" name="file" required>
+    <button class="btn btn-primary mb-2" type="submit">Upload</button>
+
+  </form>
+  {% else %}
+      <p>Please login to see this page.</p>
+     <script>
+         //alert("Please login to access this page")
+         location.replace("accounts/login")
+     </script>
+      
+
+  {% endif %}
+  
+
+{% endblock content %}

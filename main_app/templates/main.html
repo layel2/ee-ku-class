@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% load static %}
+
+<script>
+    pageName = "nav-main"
+    sub_name = {{subject|safe}}
+    function logg(){
+       val = document.getElementById("type").value
+       if(val == "student"){
+           document.getElementById('add_selected').innerHTML=
+           '<select class="form-control" id="group" name="year" onchange="logg2()"><option value="sy1">นิสิตปี 1</option><option value="sy2">นิสิตปี 2</option><option value="sy3">นิสิตปี 3</option><option value="sy4">นิสิตปี 4</option><option value="grad">นิสิต ป.โท-เอก</option></select>'
+           document.getElementById('add_selected_2').innerHTML=
+           '<select class="form-control" id="group" name="group"><option value="all">All</option><option value="normal">ภาคปกติ</option><option value="special">ภาคพิเศษ</option><option value="iup">IUP</option></select>'
+       }
+
+       else if(val == "teacher"){
+        document.getElementById('add_selected').innerHTML=
+        '<select class="form-control" id="group" name="group"> {% for lec in teacher|dictsort:"lecturer_name"  %}<option value="{{lec.lecturer_id}}">{{ lec }}</option>{% endfor %}</select>'
+        document.getElementById('add_selected_2').innerHTML=''
+       }
+
+       else if(val == "subject"){
+        document.getElementById('add_selected').innerHTML=
+        '<select class="form-control" id="group" name="group"></select>'
+        document.getElementById('add_selected_2').innerHTML=''
+        sub = sub_name[document.getElementById("sem").value]
+        for(var i=0;i<sub.length;i++){
+            var option = document.createElement("option");
+            option.text = sub[i][0]+' '+sub[i][1]
+            option.value = sub[i][2]
+            document.getElementById("group").add(option)
+        }
+       }
+
+       else if(val == "room"){
+        document.getElementById('add_selected').innerHTML=
+        '<select class="form-control" id="group" name="group"> {% for r in room %}<option value="{{r}}">{{ r}}</option>{% endfor %}</select>'
+        document.getElementById('add_selected_2').innerHTML=''
+       }
+    }
+    function logg2(){
+        val2 = document.getElementById("group").value
+        if(val2 == 'grad') $('#add_selected_2').hide();
+        else $('#add_selected_2').show();
+    }
+</script>
+
+<form method='POST'>
+    {% csrf_token %}
+    <div class="row">
+        <div class="col">
+            <label>Semester :</label>
+            <select  id="sem" name="sem" class="custom-select" onchange="logg()">
+                {% for sem in semester %}
+                    <option value='{{sem}}'>{{ sem }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col">
+            <label class="control-label">Search for :</label>
+            <select id="type" name="type" class="custom-select" onchange="logg()">
+                <option value="student">สำหรับนิสิต</option>
+                <option value="teacher">ผู้สอน</option>
+                <option value="subject">ตารางเรียนวิชา</option>
+                <option value="room">ห้องเรียน</option>
+            </select>
+        </div>
+    </div>
+    <p></p>
+    <label class="control-label">Detail :</label>
+    <div class="row">
+        <div class="col">
+            <div id="add_selected"></div>
+        </div>
+        <div class="col">
+            <div id="add_selected_2"></div>
+        </div>
+            <script>logg()</script>
+        
+    </div>
+    <div class="row-2">
+        <br>
+        <button type="submit" class="form-control btn btn-primary" id="tab-btn">Search</button>
+    </div>
+
+</form>
+
+{% endblock content %}

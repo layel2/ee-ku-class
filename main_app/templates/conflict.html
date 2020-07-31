@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% if user.is_authenticated %}
+<script>
+    pageName = "nav-conf"
+</script>
+<form method='POST'>
+    {% csrf_token %}
+    <label class="control-label">Semester :</label>
+    <div class="row">
+       
+    
+        <div class="col-4">
+    <select class="custom-select" id="sem" name="sem">
+        {% for sem in semester %}
+            <option value='{{sem}}'>{{ sem }}</option>
+        {% endfor %}
+    </select>
+</div>
+<div class="col-2">
+    <button type="submit" class="btn btn-primary" id="tab-btn">Search</button>
+</div>
+</div>
+
+</form>
+<br>
+<table class="table table-sm">
+    <tr>
+        <td>อาจารย์</td>
+        <td>ห้อง</td>
+    </tr>
+    <tr>
+    <td class = "align-top">
+    {% for lec in con_lec %}
+    <p>อ. {{lec}}</p>
+    {% endfor %}
+    </td>
+    <td class = align-top>
+        {% for room in con_room %}
+        <p>{{room}}</p>
+        {% endfor %} 
+    </td>
+    </tr>
+</table>
+
+{% else %}
+<p>Please login to see this page.</p>
+<script>
+   //alert("Please login to access this page")
+   location.replace("accounts/login")
+</script>
+
+
+{% endif %}
+
+{% endblock content %}

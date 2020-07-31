@@ -1,0 +1,60 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>EE Course</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+<div class="text-center">
+  <img src = {% static "Logo_ee.png" %} class="img-fluid " style="width: 100%;height: auto;max-width: 375px;"></img>
+  <h1>EE Course Schedule </h1>
+  <h5>(Updated on : {{lastDate}} )</h5>
+</div>
+<nav  class="navbar navbar-expand-sm bg-dark navbar-dark">
+  <ul class="navbar-nav">
+    <li class="nav-item">
+      <a class="nav-link" id="nav-main" href="{% url 'main_page' %}">Home</a>
+    </li>
+    {% if user.is_authenticated %}
+    <li class="nav-item">
+      <a class="nav-link" id="nav-sum" href="{% url 'summary_page' %}">Summary</a>
+    </li>
+    <li class="nav-item"></li>
+      <a class="nav-link" id="nav-conf" href="{% url 'conflict_page' %}">Conflict Case</a>
+    </li>
+    <li class="nav-item"></li>
+    <a class="nav-link" id="nav-adv" href="{% url 'advance_page' %}">Advance</a>
+  </li>
+    <li class="nav-item">
+      <a class="nav-link" id="nav-add" href="{% url 'add_file_page' %}">Import file</a>
+    </li>
+    {% endif %}
+  </ul>
+  <ul class="navbar-nav ml-auto">
+    <li>
+      {% if user.is_authenticated %}
+  <a class="nav-link" id="nav-add" href="{% url 'logout' %}?next={{request.path}}">Logout</a>
+    {% else %}
+    <a class="nav-link" id="nav-add" href="{% url 'login' %}">Login</a>
+    {% endif %}
+</li>
+  </ul>
+</nav>
+<br>
+{% block content %}isBug?{% endblock content %}
+</body>
+<footer>
+  <script>
+    document.getElementById(pageName).className += " active"
+  </script>
+  <div style="text-align: center; font-size: 12px;">©2020 EE KU</div>
+</footer>
+</html>
+

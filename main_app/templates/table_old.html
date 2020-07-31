@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% load static %}
+<div class="table-responsive-xl">
+    <style>
+table {
+  width: 100%;
+  border-collapse:collapse ;
+}
+td {
+  width: 4.16%;
+  height: 50px;
+  font-size: 12px;
+  position: relative;
+}
+
+</style>
+<a href="{% url 'main_page' %}">Home</a>
+<table class = "table table-bordered table-sm small table-fixed" id = "tab_main">
+
+
+</table>
+</div>
+
+<script>
+    
+    var time_list = ['','8.00-9.00','9.00-10.00','10.00-11.00','11.00-12.00','12.00-13.00','13.00-14.00','14.00-15.00','15.00-16.00','16.00-17.00','17.00-18.00','18.00-19.00']
+    var i;
+    table_id = document.getElementById("tab_main")
+    temp_str = ""
+    temp_str+='<thead>\n<tr>'
+    for(i=0;i<time_list.length;i++){
+        temp_str+='<td colspan=2 scope="col" class="align-middle" >'+time_list[i]+'</td>'
+    }
+    temp_str += '</tr>\n</thead>'
+    table_id.innerHTML += temp_str
+    day_data = {{day_data_list|safe}}
+
+    function addrow(num_row,rowText){
+        var i
+        temp_str = ""
+        temp_str += '<tr id=row'+String(num_row)+'>'
+        for(i=0;i<23;i++){
+            if(i==0) {
+                temp_str += '<td colspan=2 id = row'+String(num_row)+'-'+String(i)+' scope="col" class="align-middle">'+rowText+'</td>'
+                continue;
+            }
+            temp_str += '<td id = row'+String(num_row)+'-'+String(i)+' scope="col" class="align-middle"></td>'
+        }
+        table_id.innerHTML += temp_str
+        lastRow ++  
+    }
+    function fillTime(num_row,sub_data,day_text){
+        var i
+        timeSplit = sub_data['time'].split('-')
+        if(timeSplit.length<=1) return False;
+        //Convert 8.00-19.00 to 1-23
+        for(i=0;i<2;i++){
+            timeSplit[i] = parseFloat(timeSplit[i])
+            if((timeSplit[i]*10)%10 == 3) timeSplit[i] += 0.2;
+            timeSplit[i] = parseInt(((timeSplit[i]-8)*2)+1)
+        }
+       fillTab(timeSplit,num_row,sub_data,day_text)
+    }
+    function fillTab(timeSplit,num_row,sub_data,day_text){
+        var cur_row_id = 'row'+String(num_row)
+        var cur_row = document.getElementById(cur_row_id)
+        for(i=timeSplit[0] ; i<timeSplit[1] ; i++){
+            var cur_col_id = cur_row_id+'-'+String(i)
+            let cur_col = document.getElementById(cur_col_id)
+            
+            if(cur_col==null){
+                if(document.getElementById('row'+String(num_row+1))==null) addrow(num_row+1,day_text);
+                fillTab(timeSplit,num_row+1,sub_data)
+                return;
+            }
+            else if(cur_col.innerText!= ""){
+                if(document.getElementById('row'+String(num_row+1))==null) addrow(num_row+1,day_text);
+                fillTab(timeSplit,num_row+1,sub_data)
+                return;
+            }
+        }
+        timeDiff = timeSplit[1]-timeSplit[0]
+
+        for(i=timeSplit[0] ; i<timeSplit[1] ; i++){
+            var cur_col_id = cur_row_id+'-'+String(i)
+            var cur_col = document.getElementById(cur_col_id)
+            if(i==timeSplit[0]){
+                cur_col.colSpan = timeDiff
+                cur_col.innerText += sub_data['code']+' sec: '+sub_data["sec"]+'\n'+sub_data["name"]
+            }
+            else {
+                cur_col.remove()
+            }
+        }
+    }
+    var lastRow = 0;
+    var currRow = 0;
+    day_dict = {0:'Monday',1:'Tuesday',2:'Wednesday',3:'Thursday',4:'Friday'}
+    for(n_day = 0;n_day<day_data.length;n_day++){
+        addrow(lastRow+1,day_dict[n_day])
+        currRow = lastRow
+        for(n_sub=0;n_sub<day_data[n_day].length;n_sub++){
+            fillTime(currRow, day_data[n_day][n_sub] ,day_dict[n_day])
+        }
+        document.getElementById('row'+String(currRow)+'-0').rowSpan = lastRow-currRow+1
+        for(rowdel=currRow+1;rowdel<=lastRow;rowdel++){
+            document.getElementById('row'+String(rowdel)+'-0').remove()
+        }
+    }
+    str_html = table_id.innerHTML
+    str_html = str_html.split("<tbody>").join("")
+    str_html = str_html.split("</tbody>").join("")
+    table_id.innerHTML = str_html
+
+
+</script>
+
+
+{% endblock content %}
