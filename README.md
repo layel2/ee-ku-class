@@ -1,2 +1,2 @@
-# ee-ku-class
+# EE KU Course Schedule Website
 **Web : [http://ee-course.herokuapp.com/](http://ee-course.herokuapp.com/)**
