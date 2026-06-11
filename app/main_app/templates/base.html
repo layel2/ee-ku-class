@@ -6,57 +6,66 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Editorial / academic type pairing. Trirong = Thai+Latin serif display.
-       IBM Plex Sans Thai = body. IBM Plex Mono = datelines / metadata / time labels. -->
+  <!-- Matches the department site (www.ee.ku.ac.th): Anuphan (Thai+Latin) as the
+       primary face, Inter as the Latin display fallback, IBM Plex Mono for
+       time labels / numeric metadata in the timetable grid. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Trirong:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
   <!-- jQuery retained: main.html uses $('#add_selected_2').hide()/.show() -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 
   <style>
     :root{
-      --paper:#f3efe6;
-      --paper-2:#ece5d6;
-      --paper-3:#e4dcc8;
-      --ink:#1c1b18;
-      --ink-soft:#4f4a3e;
-      --ink-faint:#7c7563;
-      --accent:#8a2b2b;        /* Engineering oxblood — สีแดงเลือดหมู */
-      --accent-deep:#5e1e1e;
-      --accent-bright:#a83838;
-      --oxblood:#8a2b2b;       /* conflicts / alerts — same family as accent */
-      --rule:#c8bca0;
-      --rule-soft:#d8cfb9;
-      --rule-strong:#6e6a5c;
+      /* surfaces — clean light institutional palette (matches dept site) */
+      --paper:#f4f4f6;          /* page background */
+      --surface:#ffffff;        /* cards / panels */
+      --paper-2:#ececef;        /* file input / subtle fills */
+      --paper-3:#e3e3e7;        /* alt table rows */
+
+      /* ink — KU-EE neutral grays */
+      --ink:#111827;
+      --ink-soft:#374151;
+      --ink-faint:#6b7280;
+
+      /* brand — KU Electrical Engineering maroon (--ku-red / --ku-red-dark) */
+      --accent:#8b232e;
+      --accent-deep:#6c1b24;
+      --accent-bright:#b91c1c;
+      --oxblood:#8b232e;        /* conflicts / alerts — same family */
       --gold:#9a7b27;
 
-      /* modern timetable surface tokens (shared with table.html) */
-      --radius:8px;
-      --radius-sm:6px;
-      --shadow:0 1px 3px rgba(28,27,24,.10), 0 1px 2px rgba(28,27,24,.06);
-      --shadow-lift:0 8px 20px -6px rgba(28,27,24,.22);
+      --rule:#e5e7eb;
+      --rule-soft:#eef0f2;
+      --rule-strong:#d1d5db;
+
+      /* timetable surface tokens (shared with table.html) */
+      --radius:12px;
+      --radius-sm:9px;
+      --shadow:0 1px 2px rgba(17,24,39,.06), 0 4px 12px -6px rgba(17,24,39,.10);
+      --shadow-lift:0 14px 30px -10px rgba(17,24,39,.22);
       --cat-normal-bar:#3b6fb0;  --cat-normal-fill:#eef3fa;
       --cat-special-bar:#2f8a78; --cat-special-fill:#e8f4f1;
       --cat-iup-bar:#b6892f;     --cat-iup-fill:#f8f1de;
       --cat-grad-bar:#6b5aa6;    --cat-grad-fill:#efecf7;
 
-      --serif:'Trirong', Georgia, 'Times New Roman', serif;
-      --sans:'IBM Plex Sans Thai', system-ui, sans-serif;
+      /* type — kept under the existing var names so child templates inherit */
+      --serif:'Anuphan','Inter',system-ui,sans-serif;   /* display / headings */
+      --sans:'Anuphan','Inter',system-ui,sans-serif;    /* body */
       --mono:'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
 
-      --measure:1080px;
-      --pad:clamp(18px, 4vw, 56px);
+      --measure:1120px;
+      --pad:clamp(18px, 4vw, 48px);
+      --header-h:84px;
     }
 
     *{ box-sizing:border-box; }
-
-    html{ -webkit-text-size-adjust:100%; }
+    html{ -webkit-text-size-adjust:100%; scroll-behavior:smooth; }
 
     body{
       margin:0;
-      background-color:var(--paper);
+      background:var(--paper);
       color:var(--ink);
       font-family:var(--sans);
       font-size:16px;
@@ -64,175 +73,98 @@
       font-feature-settings:"kern" 1, "liga" 1;
       -webkit-font-smoothing:antialiased;
       text-rendering:optimizeLegibility;
-      position:relative;
       min-height:100vh;
     }
 
-    /* faint paper grain — atmosphere without noise */
-    body::before{
-      content:"";
-      position:fixed;
-      inset:0;
-      pointer-events:none;
-      z-index:0;
-      opacity:.5;
-      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    /* ============ HEADER (sticky white bar — dept-site style) ============ */
+    .site-header{
+      position:sticky;
+      top:0;
+      z-index:50;
+      background:rgba(255,255,255,.92);
+      backdrop-filter:saturate(1.4) blur(8px);
+      -webkit-backdrop-filter:saturate(1.4) blur(8px);
+      border-top:4px solid var(--accent);
+      border-bottom:1px solid var(--rule);
+      box-shadow:0 1px 0 rgba(17,24,39,.02);
     }
-
-    /* ============ MASTHEAD ============ */
-    .masthead{
-      position:relative;
-      z-index:1;
-      padding:clamp(20px,3vw,34px) var(--pad) 0;
-      border-top:6px solid var(--accent-deep);
-      animation:fade-down .7s cubic-bezier(.2,.7,.2,1) both;
-    }
-    .masthead__inner{
+    .site-header__bar{
       max-width:var(--measure);
       margin:0 auto;
-    }
-    .masthead__kicker{
-      font-family:var(--mono);
-      font-size:11px;
-      letter-spacing:.32em;
-      text-transform:uppercase;
-      color:var(--ink-faint);
+      min-height:var(--header-h);
+      padding:10px var(--pad);
       display:flex;
       align-items:center;
-      justify-content:center;
-      gap:14px;
+      gap:20px;
       flex-wrap:wrap;
-      padding-bottom:18px;
     }
-    .masthead__kicker .dot{ color:var(--accent); }
-    .masthead__top{
-      display:flex;
-      flex-direction:column;
+    .brand{
+      display:inline-flex;
       align-items:center;
-      text-align:center;
-      gap:clamp(10px,2vw,18px);
-      border-top:1px solid var(--rule);
-      padding-top:clamp(20px,3vw,32px);
-    }
-    .masthead__logo{
-      width:clamp(180px,30vw,320px);
-      height:auto;
       flex:0 0 auto;
-      filter:saturate(1.05);
+      text-decoration:none;
+    }
+    .brand__mark{
+      height:130px;
+      width:auto;
       display:block;
-      margin:0 auto;
     }
-    .masthead__titles{ width:100%; min-width:0; }
-    .masthead h1{
-      font-family:var(--serif);
-      font-weight:600;
-      font-size:clamp(24px,3.6vw,40px);
-      line-height:1.0;
-      letter-spacing:-.015em;
-      margin:0;
-      color:var(--ink);
-    }
-    .masthead h1 em{
-      font-style:italic;
-      font-weight:500;
-      color:var(--accent);
-    }
-    .masthead__sub{
-      font-family:var(--sans);
-      font-size:clamp(13px,1.6vw,16px);
-      color:var(--ink-soft);
-      margin-top:10px;
-      font-weight:500;
-    }
-    .masthead__dateline{
-      flex:0 0 auto;
-      text-align:center;
-      font-family:var(--mono);
-      font-size:11px;
-      letter-spacing:.18em;
-      text-transform:uppercase;
-      color:var(--ink-faint);
-      line-height:1.8;
-      white-space:nowrap;
-    }
-    .masthead__dateline b{
-      color:var(--ink);
-      font-size:13px;
-      letter-spacing:.06em;
-      font-weight:600;
-      margin-left:8px;
-    }
-
-    /* double rule under masthead */
-    .masthead__rule{
-      max-width:var(--measure);
-      margin:18px auto 0;
-      border:0;
-      border-top:3px solid var(--ink);
-      position:relative;
-    }
-    .masthead__rule::after{
-      content:"";
-      position:absolute;
-      left:0; right:0; top:4px;
-      border-top:1px solid var(--ink);
-    }
-
-    /* ============ NAV ============ */
-    .topnav{
-      position:relative;
-      z-index:1;
-      padding:0 var(--pad);
-      animation:fade-down .7s .06s cubic-bezier(.2,.7,.2,1) both;
+    .site-nav{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex:1 1 auto;
+      flex-wrap:wrap;
+      justify-content:flex-end;
     }
     .navbar-nav{
-      max-width:var(--measure);
-      margin:0 auto;
       list-style:none;
       display:flex;
-      align-items:stretch;
-      flex-wrap:wrap;
-      gap:0;
-      padding:0;
-    }
-    .topnav__bar{
-      max-width:var(--measure);
-      margin:0 auto;
-      display:flex;
       align-items:center;
-      justify-content:space-between;
       flex-wrap:wrap;
-      border-bottom:1px solid var(--rule);
+      gap:2px;
+      padding:0;
+      margin:0;
     }
-    .topnav__bar > ul.navbar-nav{ margin:0; }
-    .topnav__bar > ul.navbar-nav.ml-auto{ display:flex; }
+    .navbar-nav.ml-auto{ margin-left:0; }
     .nav-item{ display:flex; }
     .nav-link{
       display:block;
-      font-family:var(--mono);
-      font-size:12px;
-      letter-spacing:.14em;
-      text-transform:uppercase;
+      font-family:var(--sans);
+      font-size:14.5px;
+      font-weight:500;
+      letter-spacing:0;
       color:var(--ink-soft);
       text-decoration:none;
-      padding:15px 16px 13px;
+      padding:9px 13px;
+      border-radius:8px;
       position:relative;
-      transition:color .18s ease, background .18s ease;
+      transition:color .16s ease, background .16s ease;
     }
     .nav-link::after{
       content:"";
       position:absolute;
-      left:16px; right:16px; bottom:0;
+      left:13px; right:13px; bottom:5px;
       height:2px;
       background:var(--accent);
+      border-radius:2px;
       transform:scaleX(0);
       transform-origin:left;
       transition:transform .22s cubic-bezier(.2,.7,.2,1);
     }
-    .nav-link:hover{ color:var(--ink); background:rgba(138,43,43,.05); }
+    .nav-link:hover{ color:var(--ink); background:rgba(139,35,46,.06); }
     .nav-link:hover::after{ transform:scaleX(1); }
     .nav-link.active{ color:var(--accent-deep); font-weight:600; }
-    .nav-link.active::after{ transform:scaleX(1); height:3px; }
+    .nav-link.active::after{ transform:scaleX(1); }
+    /* login / logout pill on the far right */
+    .nav-link--auth{
+      margin-left:6px;
+      color:#fff;
+      background:var(--accent);
+      font-weight:600;
+    }
+    .nav-link--auth::after{ display:none; }
+    .nav-link--auth:hover{ color:#fff; background:var(--accent-deep); }
 
     /* ============ CONTENT SHELL ============ */
     .shell{
@@ -240,79 +172,82 @@
       z-index:1;
       max-width:var(--measure);
       margin:0 auto;
-      padding:clamp(26px,4vw,48px) var(--pad) 80px;
-      animation:fade-up .65s .12s cubic-bezier(.2,.7,.2,1) both;
+      padding:clamp(28px,4vw,52px) var(--pad) 88px;
+      animation:fade-up .55s .05s cubic-bezier(.2,.7,.2,1) both;
     }
 
-    /* editorial section labels reusable by child templates */
+    /* section labels reusable by child templates */
     .eyebrow{
-      font-family:var(--mono);
-      font-size:11px;
-      letter-spacing:.28em;
+      font-family:var(--sans);
+      font-size:12px;
+      font-weight:600;
+      letter-spacing:.16em;
       text-transform:uppercase;
       color:var(--accent);
       display:inline-flex;
       align-items:center;
       gap:10px;
-      margin:0 0 10px;
+      margin:0 0 12px;
     }
     .eyebrow::before{
       content:"";
-      width:26px;
-      height:1px;
+      width:24px;
+      height:2px;
+      border-radius:2px;
       background:var(--accent);
     }
     .page-title{
       font-family:var(--serif);
-      font-weight:600;
-      font-size:clamp(26px,4vw,40px);
-      line-height:1.04;
-      letter-spacing:-.01em;
-      margin:0 0 6px;
+      font-weight:700;
+      font-size:clamp(27px,4vw,42px);
+      line-height:1.08;
+      letter-spacing:-.02em;
+      margin:0 0 8px;
+      color:var(--ink);
     }
     .page-lede{
       color:var(--ink-soft);
-      max-width:60ch;
-      margin:0 0 28px;
+      max-width:62ch;
+      font-size:clamp(15px,1.7vw,17px);
+      margin:0 0 30px;
     }
-    h1,h2,h3,h4,h5{ font-family:var(--serif); color:var(--ink); }
+    h1,h2,h3,h4,h5{ font-family:var(--serif); color:var(--ink); letter-spacing:-.01em; }
 
     a{ color:var(--accent); text-decoration:none; }
-    a:hover{ text-decoration:underline; text-underline-offset:3px; }
+    a:hover{ color:var(--accent-deep); text-decoration:underline; text-underline-offset:3px; }
 
     .backlink{
       display:inline-flex;
       align-items:center;
       gap:8px;
-      font-family:var(--mono);
-      font-size:12px;
-      letter-spacing:.1em;
-      text-transform:uppercase;
-      color:var(--ink-soft);
+      font-family:var(--sans);
+      font-size:14px;
+      font-weight:500;
+      color:var(--ink-faint);
       margin-bottom:20px;
     }
     .backlink::before{ content:"←"; }
     .backlink:hover{ color:var(--accent); text-decoration:none; }
 
-    /* editorial "paper card" — bordered panel for forms */
+    /* white "card" panel — bordered, soft shadow, thin maroon top accent */
     .panel{
-      background:linear-gradient(180deg, rgba(255,255,255,.42), rgba(255,255,255,0));
+      background:var(--surface);
       border:1px solid var(--rule);
       border-top:3px solid var(--accent);
-      padding:clamp(20px,3vw,34px);
-      box-shadow:0 1px 0 var(--rule-soft), 0 18px 40px -34px rgba(94,30,30,.55);
+      border-radius:var(--radius);
+      padding:clamp(22px,3vw,34px);
+      box-shadow:var(--shadow);
     }
 
     /* ============ FORM SYSTEM (also covers Bootstrap classnames in templates/JS) ============ */
     label, .control-label{
       display:block;
-      font-family:var(--mono);
-      font-size:11px;
-      letter-spacing:.16em;
-      text-transform:uppercase;
-      color:var(--ink-faint);
-      margin-bottom:7px;
-      font-weight:500;
+      font-family:var(--sans);
+      font-size:13px;
+      font-weight:600;
+      letter-spacing:.01em;
+      color:var(--ink-soft);
+      margin-bottom:8px;
     }
     .form-control, .custom-select,
     select, input[type=text], input[type=password], input[type=file]{
@@ -320,12 +255,12 @@
       font-family:var(--sans);
       font-size:15px;
       color:var(--ink);
-      background:var(--paper);
+      background:var(--surface);
       border:1px solid var(--rule-strong);
-      border-radius:0;
+      border-radius:9px;
       padding:11px 13px;
       line-height:1.35;
-      transition:border-color .16s ease, box-shadow .16s ease, background .16s ease;
+      transition:border-color .16s ease, box-shadow .16s ease;
       appearance:none;
       -webkit-appearance:none;
     }
@@ -345,25 +280,24 @@
     select:focus, input:focus{
       outline:none;
       border-color:var(--accent);
-      background:#fff;
-      box-shadow:0 0 0 3px rgba(138,43,43,.14);
+      box-shadow:0 0 0 3px rgba(139,35,46,.15);
     }
     input[type=file]{
       padding:9px 12px;
       background:var(--paper-2);
       cursor:pointer;
-      font-family:var(--mono);
-      font-size:13px;
+      font-family:var(--sans);
+      font-size:14px;
     }
     input[type=file]::file-selector-button{
-      font-family:var(--mono);
-      font-size:11px;
-      letter-spacing:.1em;
-      text-transform:uppercase;
+      font-family:var(--sans);
+      font-size:13px;
+      font-weight:600;
       background:var(--accent);
-      color:var(--paper);
+      color:#fff;
       border:0;
-      padding:8px 14px;
+      border-radius:7px;
+      padding:8px 16px;
       margin-right:14px;
       cursor:pointer;
       transition:background .16s ease;
@@ -372,27 +306,28 @@
 
     /* buttons */
     .btn, button[type=submit]{
-      font-family:var(--mono);
-      font-size:12px;
-      letter-spacing:.14em;
-      text-transform:uppercase;
+      font-family:var(--sans);
+      font-size:14.5px;
       font-weight:600;
-      border:1px solid var(--accent-deep);
-      border-radius:0;
-      padding:13px 26px;
+      letter-spacing:.01em;
+      border:1px solid var(--accent);
+      border-radius:9px;
+      padding:12px 24px;
       cursor:pointer;
-      transition:transform .12s ease, background .16s ease, box-shadow .16s ease, color .16s ease;
-      background:var(--paper);
+      background:var(--surface);
       color:var(--accent-deep);
+      transition:transform .12s ease, background .16s ease, box-shadow .16s ease, color .16s ease;
     }
     .btn-primary, button[type=submit]{
       background:var(--accent);
-      color:var(--paper);
-      box-shadow:0 10px 22px -16px rgba(94,30,30,.9);
+      color:#fff;
+      border-color:var(--accent);
+      box-shadow:0 8px 18px -12px rgba(108,27,36,.9);
     }
     .btn:hover, button[type=submit]:hover{
       background:var(--accent-deep);
-      color:var(--paper);
+      border-color:var(--accent-deep);
+      color:#fff;
       transform:translateY(-1px);
     }
     .btn:active, button[type=submit]:active{ transform:translateY(0); }
@@ -405,7 +340,7 @@
     .col-2{ flex:0 0 auto; display:flex; align-items:flex-end; }
     .row-2{ margin-top:8px; }
 
-    .form-inline{ display:flex; flex-wrap:wrap; align-items:flex-end; gap:18px 14px; }
+    .form-inline{ display:flex; flex-wrap:wrap; align-items:flex-end; gap:18px 16px; }
     .form-inline .form-group{ display:flex; flex-direction:column; }
     .form-group{ margin-bottom:0; }
     .form-inline .form-group input[type=text]{ width:auto; min-width:140px; }
@@ -422,70 +357,121 @@
     .small{ font-size:.84em; }
     .align-top{ vertical-align:top; }
 
-    /* ============ TABLES (editorial data tables) ============ */
+    /* ============ TABLES (clean data tables) ============ */
     table.table{
       width:100%;
-      border-collapse:collapse;
-      background:rgba(255,255,255,.35);
+      border-collapse:separate;
+      border-spacing:0;
+      background:var(--surface);
       font-size:14px;
       margin-top:8px;
+      border-radius:var(--radius-sm);
+      overflow:hidden;
+      box-shadow:var(--shadow);
     }
     table.table thead td,
     table.table thead th,
     table.table tr:first-child td{
-      font-family:var(--mono);
-      font-size:10.5px;
-      letter-spacing:.1em;
-      text-transform:uppercase;
-      color:var(--paper);
-      background:var(--accent-deep);
+      font-family:var(--sans);
+      font-size:12.5px;
       font-weight:600;
+      letter-spacing:.02em;
+      color:#fff;
+      background:var(--accent-deep);
       vertical-align:middle;
     }
     table.table td, table.table th{
-      padding:10px 12px;
+      padding:11px 13px;
       text-align:left;
       vertical-align:top;
     }
     table.table-bordered td, table.table-bordered th{
-      border:1px solid var(--rule);
+      border-bottom:1px solid var(--rule);
+      border-right:1px solid var(--rule-soft);
     }
     table.table tbody tr:nth-child(even),
     table.table tr:nth-child(even){
-      background:rgba(228,220,200,.32);
+      background:var(--paper-3);
     }
-    table.table-sm td, table.table-sm th{ padding:7px 10px; }
-    table.table tr:hover td{ background:rgba(138,43,43,.06); }
+    table.table-sm td, table.table-sm th{ padding:8px 11px; }
+    table.table tr:hover td{ background:rgba(139,35,46,.05); }
     table.table tr:first-child:hover td{ background:var(--accent-deep); }
 
-    /* ============ FOOTER / COLOPHON ============ */
-    footer{
+    /* ============ FOOTER (dark charcoal — dept-site style) ============ */
+    .site-footer{
       position:relative;
       z-index:1;
+      background:#111827;
+      color:#cbd0d8;
+      margin-top:40px;
+    }
+    .site-footer__inner{
       max-width:var(--measure);
       margin:0 auto;
-      padding:26px var(--pad) 40px;
-      border-top:1px solid var(--rule);
+      padding:48px var(--pad) 34px;
+      display:grid;
+      grid-template-columns:1.6fr 1fr 1fr;
+      gap:32px 40px;
     }
-    .colophon{
+    .foot-brand{
+      font-family:var(--serif);
+      font-weight:700;
+      font-size:17px;
+      color:#fff;
+      letter-spacing:-.01em;
+      margin-bottom:12px;
+    }
+    .foot-addr{ margin:0; font-size:14px; line-height:1.75; color:#9aa1ac; max-width:42ch; }
+    .foot-head{
+      font-family:var(--sans);
+      font-size:12px;
+      font-weight:600;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:#fff;
+      margin-bottom:14px;
+    }
+    .site-footer__inner a{
+      display:block;
+      color:#9aa1ac;
+      font-size:14px;
+      padding:5px 0;
+      text-decoration:none;
+      transition:color .15s ease;
+    }
+    .site-footer__inner a:hover{ color:#fff; text-decoration:none; }
+    .foot-meta{ display:block; font-size:13px; color:#9aa1ac; }
+    .foot-date{
+      display:block;
+      font-family:var(--mono);
+      font-size:15px;
+      color:#fff;
+      margin-top:4px;
+      letter-spacing:.02em;
+    }
+    .site-footer__bar{
+      border-top:1px solid rgba(255,255,255,.08);
+    }
+    .site-footer__bar > div{
+      max-width:var(--measure);
+      margin:0 auto;
+      padding:18px var(--pad);
       display:flex;
       justify-content:space-between;
       align-items:center;
       flex-wrap:wrap;
-      gap:10px;
-      font-family:var(--mono);
-      font-size:11px;
-      letter-spacing:.14em;
-      text-transform:uppercase;
-      color:var(--ink-faint);
+      gap:8px;
+      font-size:12.5px;
+      color:#7a818c;
     }
-    .colophon .mark{ color:var(--accent); }
+    .site-footer__bar .mark{ color:#fff; font-weight:600; }
 
     /* notice / alert */
     .notice{
       border-left:3px solid var(--accent);
-      background:rgba(138,43,43,.06);
-      padding:14px 18px;
+      background:rgba(139,35,46,.06);
+      border-radius:0 9px 9px 0;
+      padding:15px 18px;
       font-size:15px;
       color:var(--ink-soft);
     }
@@ -494,17 +480,23 @@
     @keyframes fade-down{ from{ opacity:0; transform:translateY(-10px);} to{ opacity:1; transform:none;} }
 
     @media (prefers-reduced-motion:reduce){
+      html{ scroll-behavior:auto; }
       *{ animation:none !important; transition:none !important; }
     }
+    @media (max-width:780px){
+      .site-footer__inner{ grid-template-columns:1fr 1fr; }
+    }
     @media (max-width:640px){
-      .nav-link{ padding:12px 12px 10px; }
+      .site-header__bar{ gap:10px; }
+      .brand__mark{ height:46px; }
+      .nav-link{ padding:8px 10px; font-size:14px; }
+      .site-footer__inner{ grid-template-columns:1fr; }
     }
 
     /* print: drop site chrome, keep the content + colors */
     @media print{
       body{ background:#fff; }
-      body::before{ display:none; }
-      .masthead, .masthead__rule, .topnav, footer, .backlink{ display:none !important; }
+      .site-header, .site-footer, .backlink{ display:none !important; }
       .shell{ padding:0; max-width:none; animation:none; }
       a{ color:var(--ink); }
       *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
@@ -513,69 +505,71 @@
 </head>
 <body>
 
-  <header class="masthead">
-    <div class="masthead__inner">
-      <div class="masthead__kicker">
-        <span>Kasetsart University</span>
-        <span class="dot">—</span>
-        <span>Department of Electrical Engineering</span>
-      </div>
-      <div class="masthead__top">
-        <img src="{% static 'Logo_ee.png' %}" class="masthead__logo img-fluid" alt="EE KU">
-        <div class="masthead__titles">
-          <h1>EE <em>Course</em> Schedule</h1>
-          <div class="masthead__sub">ระบบจัดการตารางเรียน ภาควิชาวิศวกรรมไฟฟ้า</div>
-        </div>
-        <div class="masthead__dateline">
-          Updated
-          <b>{{ lastDate }}</b>
-        </div>
-      </div>
+  <header class="site-header">
+    <div class="site-header__bar">
+      <a class="brand" href="{% url 'main_page' %}" aria-label="EE Course Schedule — Department of Electrical Engineering, KU">
+        <img src="{% static 'Logo_ee.png' %}" class="brand__mark" alt="Electrical Engineering · Kasetsart University">
+      </a>
+      <nav class="site-nav">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link" id="nav-main" href="{% url 'main_page' %}">Home</a>
+          </li>
+          {% if user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link" id="nav-sum" href="{% url 'summary_page' %}">Summary</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="nav-conf" href="{% url 'conflict_page' %}">Conflict Case</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="nav-adv" href="{% url 'advance_page' %}">Advance</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="nav-add" href="{% url 'add_file_page' %}">Import File</a>
+          </li>
+          {% endif %}
+        </ul>
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item">
+            {% if user.is_authenticated %}
+            <a class="nav-link nav-link--auth" href="{% url 'logout' %}?next={{ request.path }}">Logout</a>
+            {% else %}
+            <a class="nav-link nav-link--auth" href="{% url 'login' %}">Login</a>
+            {% endif %}
+          </li>
+        </ul>
+      </nav>
     </div>
   </header>
-  <hr class="masthead__rule">
-
-  <nav class="topnav">
-    <div class="topnav__bar">
-      <ul class="navbar-nav">
-        <li class="nav-item">
-          <a class="nav-link" id="nav-main" href="{% url 'main_page' %}">Home</a>
-        </li>
-        {% if user.is_authenticated %}
-        <li class="nav-item">
-          <a class="nav-link" id="nav-sum" href="{% url 'summary_page' %}">Summary</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" id="nav-conf" href="{% url 'conflict_page' %}">Conflict Case</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" id="nav-adv" href="{% url 'advance_page' %}">Advance</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" id="nav-add" href="{% url 'add_file_page' %}">Import File</a>
-        </li>
-        {% endif %}
-      </ul>
-      <ul class="navbar-nav ml-auto">
-        <li class="nav-item">
-          {% if user.is_authenticated %}
-          <a class="nav-link" href="{% url 'logout' %}?next={{ request.path }}">Logout</a>
-          {% else %}
-          <a class="nav-link" href="{% url 'login' %}">Login</a>
-          {% endif %}
-        </li>
-      </ul>
-    </div>
-  </nav>
 
   <main class="shell">
     {% block content %}{% endblock content %}
   </main>
 
-  <footer>
-    <div class="colophon">
-      <span>© 2020 <span class="mark">EE · KU</span> — Faculty of Engineering</span>
-      <span>ee-course.layel2.com</span>
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <div class="foot-col">
+        <div class="foot-brand">Department of Electrical Engineering</div>
+        <p class="foot-addr">ภาควิชาวิศวกรรมไฟฟ้า คณะวิศวกรรมศาสตร์<br>มหาวิทยาลัยเกษตรศาสตร์ บางเขน กรุงเทพฯ 10900</p>
+      </div>
+      <div class="foot-col">
+        <div class="foot-head">ลิงก์</div>
+        <a href="https://www.ee.ku.ac.th/" target="_blank" rel="noopener">เว็บไซต์ภาควิชา</a>
+        <a href="https://www.eng.ku.ac.th/" target="_blank" rel="noopener">คณะวิศวกรรมศาสตร์</a>
+        <a href="https://www.ku.ac.th/" target="_blank" rel="noopener">มหาวิทยาลัยเกษตรศาสตร์</a>
+      </div>
+      <div class="foot-col">
+        <div class="foot-head">ระบบตาราง</div>
+        <span class="foot-meta">ปรับปรุงข้อมูลล่าสุด</span>
+        <span class="foot-date">{{ lastDate }}</span>
+      </div>
+    </div>
+    <div class="site-footer__bar">
+      <div>
+        <span>© 2020–2025 <span class="mark">EE · KU</span> — Faculty of Engineering</span>
+        <span>ee-course.layel2.com</span>
+      </div>
     </div>
   </footer>
 

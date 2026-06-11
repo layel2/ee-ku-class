@@ -51,7 +51,7 @@ document.getElementById("sem").value = prev_data["sem"]
 <h3 style="font-size:clamp(20px,2.6vw,26px);margin:0 0 18px">วัน {{info_data.day}} เวลา {{info_data.time}}</h3>
 <div class="legend" style="display:flex;flex-wrap:wrap;gap:10px 12px;">
   {% for i in data %}
-   <span style="font-family:var(--mono);font-size:13px;border:1px solid var(--accent);color:var(--accent-deep);background:rgba(47,82,51,.06);padding:7px 13px;">{{i}}</span>
+   <span style="font-family:var(--mono);font-size:13px;border:1px solid var(--accent);color:var(--accent-deep);background:rgba(139,35,46,.06);border-radius:8px;padding:7px 13px;">{{i}}</span>
   {% empty %}
    <span style="color:var(--ink-faint)">— ไม่มีห้องว่าง —</span>
   {% endfor %}

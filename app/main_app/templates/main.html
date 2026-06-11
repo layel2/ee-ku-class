@@ -47,11 +47,147 @@
     }
 </script>
 
-<p class="eyebrow">Timetable Index</p>
-<h2 class="page-title">เลือกดูตารางเรียน</h2>
-<p class="page-lede">เลือกภาคการศึกษาและประเภทตารางที่ต้องการ — แยกตามนิสิต ผู้สอน รายวิชา หรือห้องเรียน</p>
+<style>
+/* full-bleed hero — maroon "blueprint" band, dept-site styling */
+.home-hero{
+    position:relative;
+    width:100vw;
+    margin-left:calc(50% - 50vw);
+    margin-top:calc(-1 * clamp(28px,4vw,52px));   /* cancel .shell top padding → flush under header */
+    margin-bottom:clamp(36px,5vw,60px);
+    overflow:hidden;
+    color:#fff;
+    background:
+        radial-gradient(120% 140% at 85% -10%, rgba(184,56,56,.55), transparent 60%),
+        linear-gradient(135deg, #6c1b24 0%, #8b232e 52%, #5a1620 100%);
+}
+/* blueprint grid + drafting lines */
+.home-hero::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background-image:
+        linear-gradient(rgba(255,255,255,.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.07) 1px, transparent 1px),
+        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+    background-size:96px 96px, 96px 96px, 24px 24px, 24px 24px;
+    background-position:-1px -1px;
+    mask-image:linear-gradient(105deg, #000 35%, transparent 92%);
+    -webkit-mask-image:linear-gradient(105deg, #000 35%, transparent 92%);
+}
+.home-hero__inner{
+    position:relative;
+    z-index:1;
+    max-width:var(--measure);
+    margin:0 auto;
+    padding:clamp(54px,8vw,104px) var(--pad) clamp(48px,7vw,92px);
+}
+.home-hero__kicker{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:rgba(255,255,255,.78);
+    margin:0 0 18px;
+}
+.home-hero__kicker::before{ content:""; width:26px; height:2px; background:rgba(255,255,255,.6); border-radius:2px; }
+.home-hero h1{
+    font-family:var(--serif);
+    font-weight:700;
+    font-size:clamp(34px,6vw,66px);
+    line-height:1.02;
+    letter-spacing:-.025em;
+    margin:0;
+    color:#fff;
+    max-width:18ch;
+    text-wrap:balance;
+}
+.home-hero h1 .en{
+    display:block;
+    font-family:'Inter','Anuphan',sans-serif;
+    font-weight:800;
+    font-size:clamp(13px,1.5vw,16px);
+    letter-spacing:.26em;
+    text-transform:uppercase;
+    color:rgba(255,255,255,.62);
+    margin-bottom:14px;
+}
+.home-hero__lede{
+    margin:20px 0 0;
+    max-width:52ch;
+    font-size:clamp(15px,1.9vw,19px);
+    line-height:1.6;
+    color:rgba(255,255,255,.86);
+}
+.home-hero__cta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    margin-top:clamp(26px,4vw,38px);
+}
+.hero-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:9px;
+    font-family:var(--sans);
+    font-size:15px;
+    font-weight:600;
+    border-radius:10px;
+    padding:13px 26px;
+    text-decoration:none;
+    transition:transform .12s ease, background .16s ease, box-shadow .16s ease;
+}
+.hero-btn--primary{
+    background:#fff;
+    color:var(--accent-deep);
+    box-shadow:0 14px 30px -14px rgba(0,0,0,.6);
+}
+.hero-btn--primary:hover{ background:#fff; color:var(--accent-deep); text-decoration:none; transform:translateY(-2px); }
+.hero-btn--ghost{
+    background:rgba(255,255,255,.10);
+    color:#fff;
+    border:1px solid rgba(255,255,255,.45);
+}
+.hero-btn--ghost:hover{ background:rgba(255,255,255,.20); color:#fff; text-decoration:none; transform:translateY(-2px); }
 
-<div class="panel">
+#generator{ scroll-margin-top:90px; }   /* clear the sticky header when jumped to */
+
+.updated-note{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-family:var(--mono);
+    font-size:13px;
+    color:var(--ink-faint);
+    margin:-18px 0 26px;
+}
+.updated-note::before{ content:""; width:7px; height:7px; border-radius:50%; background:var(--accent); }
+.updated-note b{ color:var(--accent-deep); font-weight:600; }
+</style>
+
+<section class="home-hero">
+    <div class="home-hero__inner">
+        <p class="home-hero__kicker">ภาควิชาวิศวกรรมไฟฟ้า · มหาวิทยาลัยเกษตรศาสตร์</p>
+        <h1><span class="en">EE Course Schedule</span>ระบบจัดการ<em style="font-style:normal;color:#f0c9c0">ตารางเรียน</em></h1>
+        <p class="home-hero__lede">สร้างและค้นดูตารางเรียนรายภาคการศึกษาในที่เดียว — แยกตามนิสิต ผู้สอน รายวิชา และห้องเรียน พร้อมตรวจหาคาบที่ทับซ้อนและค้นหาห้องว่าง</p>
+        <div class="home-hero__cta">
+            <a class="hero-btn hero-btn--primary" href="#generator">เลือกดูตารางเรียน <span aria-hidden="true">↓</span></a>
+            <a class="hero-btn hero-btn--ghost" href="https://www.ee.ku.ac.th/" target="_blank" rel="noopener">เว็บไซต์ภาควิชา <span aria-hidden="true">↗</span></a>
+        </div>
+    </div>
+</section>
+
+<p class="eyebrow">Timetable Generator</p>
+<h2 class="page-title" style="font-size:clamp(23px,3vw,32px)">เลือกดูตารางเรียน</h2>
+<p class="page-lede">เลือกภาคการศึกษาและประเภทตารางที่ต้องการ — แยกตามนิสิต ผู้สอน รายวิชา หรือห้องเรียน</p>
+<p class="updated-note">ปรับปรุงข้อมูลล่าสุด <b>{{ lastDate }}</b></p>
+
+<div class="panel" id="generator">
 <form method='GET'>
     <div class="row">
         <div class="col">
