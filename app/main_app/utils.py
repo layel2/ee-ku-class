@@ -321,15 +321,15 @@ def genDayCount(in_data):
         else :
             day_data = data['day']
             if day_data.find('M') != -1:
-                Mon.append(data)
+                Mon.append(data.copy())
             if day_data.find('Tu') != -1:
-                Tue.append(data)
+                Tue.append(data.copy())
             if day_data.find('W') != -1:
-                Wed.append(data)
+                Wed.append(data.copy())
             if day_data.find('Th') != -1:
-                Thr.append(data)
+                Thr.append(data.copy())
             if day_data.find('F') != -1:
-                Fri.append(data)
+                Fri.append(data.copy())
     return {'mon':Mon,'tue':Tue,'wed':Wed,'thr':Thr,'fri':Fri},list((Mon,Tue,Wed,Thr,Fri))
         
 def timeSplit(sub_dt):

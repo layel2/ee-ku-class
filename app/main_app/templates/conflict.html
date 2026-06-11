@@ -5,53 +5,60 @@
 <script>
     pageName = "nav-conf"
 </script>
+
+<p class="eyebrow">Schedule Audit</p>
+<h2 class="page-title">รายการตารางทับซ้อน</h2>
+<p class="page-lede">ตรวจหาผู้สอนและห้องเรียนที่มีคาบเรียนซ้อนทับกันในภาคการศึกษาที่เลือก</p>
+
+<div class="panel" style="margin-bottom:30px">
 <form method='POST'>
     {% csrf_token %}
-    <label class="control-label">Semester :</label>
     <div class="row">
-       
-    
         <div class="col-4">
-    <select class="custom-select" id="sem" name="sem">
-        {% for sem in semester %}
-            <option value='{{sem}}'>{{ sem }}</option>
-        {% endfor %}
-    </select>
-</div>
-<div class="col-2">
-    <button type="submit" class="btn btn-primary" id="tab-btn">Search</button>
-</div>
+            <label class="control-label">Semester / ภาคการศึกษา</label>
+            <select class="custom-select" id="sem" name="sem">
+                {% for sem in semester %}
+                    <option value='{{sem}}'>{{ sem }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-2">
+            <button type="submit" class="btn btn-primary" id="tab-btn">Search</button>
+        </div>
+    </div>
+</form>
 </div>
 
-</form>
-<br>
-<table class="table table-sm">
+<table class="table table-bordered table-sm">
+    <thead>
     <tr>
-        <td>อาจารย์</td>
-        <td>ห้อง</td>
+        <td style="width:50%">อาจารย์ที่ตารางทับซ้อน</td>
+        <td style="width:50%">ห้องที่ตารางทับซ้อน</td>
     </tr>
+    </thead>
     <tr>
-    <td class = "align-top">
-    {% for lec in con_lec %}
-    <p>อ. {{lec}}</p>
-    {% endfor %}
-    </td>
-    <td class = align-top>
-        {% for room in con_room %}
-        <p>{{room}}</p>
-        {% endfor %} 
-    </td>
+        <td class="align-top">
+            {% for lec in con_lec %}
+            <p style="margin:0 0 8px">อ. {{lec}}</p>
+            {% empty %}
+            <span style="color:var(--ink-faint)">— ไม่มี —</span>
+            {% endfor %}
+        </td>
+        <td class="align-top">
+            {% for room in con_room %}
+            <p style="margin:0 0 8px">{{room}}</p>
+            {% empty %}
+            <span style="color:var(--ink-faint)">— ไม่มี —</span>
+            {% endfor %}
+        </td>
     </tr>
 </table>
 
 {% else %}
-<p>Please login to see this page.</p>
+<p class="notice">Please login to see this page.</p>
 <script>
-   //alert("Please login to access this page")
    location.replace("accounts/login")
 </script>
-
-
 {% endif %}
 
 {% endblock content %}

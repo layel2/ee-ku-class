@@ -3,10 +3,28 @@
 {% block title %}Login{% endblock %}
 
 {% block content %}
-<h2>Login</h2>
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Login</button>
-</form>
+<div style="max-width:440px;margin:0 auto;">
+  <p class="eyebrow">Staff Access</p>
+  <h2 class="page-title">เข้าสู่ระบบ</h2>
+  <p class="page-lede">สำหรับเจ้าหน้าที่และผู้สอน — เข้าสู่ระบบเพื่อจัดการข้อมูลตาราง</p>
+
+  <div class="panel">
+    <form method="post" class="login-form">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn btn-primary" style="margin-top:8px;width:100%">Login</button>
+    </form>
+  </div>
+</div>
+
+<style>
+  .login-form p{ margin:0 0 18px; }
+  .login-form label{ margin-bottom:7px; }
+  .login-form input{ width:100%; }
+  .login-form .errorlist{
+    list-style:none; padding:0; margin:0 0 14px;
+    color:var(--oxblood); font-size:13px; font-family:var(--mono);
+  }
+  .login-form .helptext{ display:none; }
+</style>
 {% endblock %}

@@ -3,182 +3,377 @@
 {% block content %}
 {% load static %}
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<style> 
+<style>
+.grid-scroll{
+    overflow-x:auto;
+    background:#fff;
+    border:1px solid var(--rule-soft);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    -webkit-overflow-scrolling:touch;
+    /* break out of the 1080px .shell to span the full viewport */
+    width:100vw;
+    margin-left:calc(50% - 50vw);
+}
+/* ONE shared column template → every cell snaps to the same lines (no drift).
+   col 1 = day label, cols 2..27 = the 26 half-hour slots (8.00–21.00).
+   row 1 = time header (54px); each lane row below is an 80px auto-row. */
 .box-container{
-    width: 1680px;
-    display: inline-block;
+    display:grid;
+    grid-template-columns:110px repeat(26, minmax(0,1fr));
+    grid-template-rows:54px;
+    grid-auto-rows:80px;
+    width:100%;
+    min-width:1024px;
 }
-    .boxHead{
-      width: 120px;
-      height: 80px;
-      text-align:center;
-      border: 1px solid blue;
-      line-height: 60px;
-      
-      
-    }
-    .boxSub{
-      width: 60px;
-      height: 80px;
-      text-align:center;
-      border: 1px dotted gray;
-      font-size: 12px;
-      
-    }
-    .blinking{
-    animation:blinkingText 1.2s infinite;
+/* time header cells — sticky to the top while scrolling */
+.boxHead{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    background:#f6f4ef;
+    color:var(--ink-faint);
+    border-bottom:1px solid var(--rule);
+    border-right:1px solid var(--rule-soft);
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.04em;
+    padding:0 4px;
+    position:sticky;
+    top:0;
+    z-index:15;
 }
-    @keyframes blinkingText{
-    0%{     color: rgb(255, 0, 0); ;    }
-    49%{    color: rgb(255, 0, 0); ; }
-    60%{    color: transparent; }
-    99%{    color:transparent;  }
-    100%{   color: rgb(255, 0, 0);    }
+/* top-left corner — sticky on both axes */
+.boxHead.corner{ grid-column:1; grid-row:1; left:0; z-index:30; }
+/* day label — sticky to the left, spans all of its day's lanes */
+.boxDay{
+    grid-column:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    background:#f6f4ef;
+    color:var(--accent);
+    border-right:1px solid var(--rule);
+    border-bottom:1px solid var(--rule);
+    font-family:var(--mono);
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:.04em;
+    padding:0 4px;
+    position:sticky;
+    left:0;
+    z-index:20;
+}
+.boxDay.today{
+    background:rgba(138,43,43,.07);
+    box-shadow:inset 3px 0 0 var(--accent);
+}
+/* empty slot — draws the faint gridlines */
+.boxSub{
+    border-right:1px solid rgba(28,27,24,.05);
+    border-bottom:1px solid rgba(28,27,24,.05);
+}
+.boxSub.dayend{ border-bottom:1px solid var(--rule); }
+/* a filled class — modern rounded card with a left category bar.
+   it's a grid item placed over the empty slot cells, so it covers them. */
+.filled{
+    margin:3px;
+    padding:7px 9px;
+    overflow:hidden;
+    text-align:left;
+    border:1px solid rgba(28,27,24,.06);
+    border-left:4px solid var(--ink-faint);
+    border-radius:var(--radius-sm);
+    box-shadow:var(--shadow);
+    font-family:var(--sans);
+    font-size:12px;
+    font-weight:600;
+    line-height:1.25;
+    color:var(--ink);
+    z-index:1;
+    cursor:pointer;
+    transition:transform .14s ease, box-shadow .14s ease;
+}
+.filled small{
+    display:block;
+    margin-top:3px;
+    font-size:10.5px;
+    font-weight:400;
+    color:var(--ink-soft);
+}
+.filled:hover{
+    transform:translateY(-2px);
+    box-shadow:var(--shadow-lift);
+    z-index:5;
+}
+.cat-normal { background:var(--cat-normal-fill);  border-left-color:var(--cat-normal-bar); }
+.cat-special{ background:var(--cat-special-fill); border-left-color:var(--cat-special-bar); }
+.cat-iup    { background:var(--cat-iup-fill);     border-left-color:var(--cat-iup-bar); }
+.cat-grad   { background:var(--cat-grad-fill);    border-left-color:var(--cat-grad-bar); }
+
+/* conflict notice — oxblood, refined attention pulse (not a harsh blink) */
+.blinking{
+    display:inline-block;
+    font-family:var(--mono);
+    font-size:13px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--oxblood);
+    border:1px solid var(--oxblood);
+    background:rgba(138,43,43,.07);
+    padding:8px 16px;
+    margin:4px 0 18px;
+    border-radius:var(--radius-sm);
+    animation:noticePulse 1.6s ease-in-out infinite;
+}
+.blinking:empty{ display:none; }
+@keyframes noticePulse{
+    0%,100%{ opacity:1; }
+    50%{ opacity:.55; }
 }
 
-    </style>
-    <a href="{% url 'main_page' %}">Back</a>
-    <h1 >ตาราง {{group}}</h1>
-    <h2 id="conflict-alert" class="blinking"></h2>
+/* legend */
+.legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px 26px;
+    align-items:center;
+    margin:22px 0 26px;
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.04em;
+    color:var(--ink-soft);
+}
+.legend .item{ display:inline-flex; align-items:center; gap:9px; }
+.legend .swatch{ width:22px; height:14px; border-radius:3px; border-left:4px solid; flex:0 0 auto; }
+
+/* this table HAS a <thead>, so base.html's shared `tr:first-child td` rule would
+   wrongly style the first body row like a header too — reset it back to a data row */
+table.tt-data tbody tr:first-child td{
+    background:transparent;
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:14px;
+    font-weight:400;
+    letter-spacing:normal;
+    text-transform:none;
+}
+table.tt-data tbody tr:first-child:hover td{ background:rgba(138,43,43,.06); }
+
+/* class-detail popup (click a card) */
+.sub-modal{ position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px; }
+.sub-modal[hidden]{ display:none; }
+.sub-modal__backdrop{ position:absolute; inset:0; background:rgba(28,27,24,.45); }
+.sub-modal__panel{
+    position:relative; z-index:1; width:min(440px,92vw);
+    max-height:86vh;                       /* fallback for browsers without dvh */
+    max-height:calc(100dvh - 32px);        /* never taller than the viewport */
+    display:flex; flex-direction:column;   /* fixed head + scrollable body */
+    overflow:hidden;                       /* clip body scroll to the rounded corners */
+    background:#fff; border-radius:var(--radius); border-top:4px solid var(--accent);
+    box-shadow:var(--shadow-lift);
+    animation:smPop .16s ease-out;
+}
+@keyframes smPop{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
+.sub-modal__close{
+    position:absolute; top:8px; right:10px; width:34px; height:34px; z-index:2;
+    border:0; background:transparent; color:var(--ink-faint);
+    font-size:24px; line-height:1; cursor:pointer; border-radius:6px;
+}
+.sub-modal__close:hover{ background:var(--paper-2); color:var(--ink); }
+.sub-modal__head{ flex:0 0 auto; padding:22px 46px 12px 26px; }   /* room for the close button */
+.sub-modal__body{ flex:1 1 auto; min-height:0; overflow-y:auto; padding:2px 26px 22px; }
+.sub-modal__code{ font-family:var(--mono); font-size:13px; letter-spacing:.08em; color:var(--accent); font-weight:600; }
+.sub-modal__title{ font-family:var(--serif); font-size:22px; line-height:1.2; color:var(--ink); margin:4px 0 0; }
+.sub-modal__detail{ display:grid; grid-template-columns:max-content 1fr; gap:8px 18px; margin:0; font-size:14px; }
+.sub-modal__detail dt{ font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); align-self:center; white-space:nowrap; }
+.sub-modal__detail dd{ margin:0; color:var(--ink); }
+
+@media print{
+    .grid-scroll{ width:auto; margin:0; overflow:visible; box-shadow:none; border:1px solid var(--rule); }
+    .box-container{ min-width:0; }
+    .boxHead, .boxDay{ position:static; }
+    .filled{ box-shadow:none; }
+    .sub-modal{ display:none !important; }
+}
+</style>
+
+<a class="backlink" href="{% url 'main_page' %}">กลับหน้าหลัก</a>
+<p class="eyebrow">Weekly Schedule</p>
+<h2 class="page-title">ตาราง {{group}}</h2>
+<h2 id="conflict-alert" class="blinking"></h2>
+
+<div class="grid-scroll">
 <div class="box-container" id = "tab_main">
 
 </div>
+</div>
+
+<div id="sub-modal" class="sub-modal" hidden>
+    <div class="sub-modal__backdrop" data-close></div>
+    <div class="sub-modal__panel" role="dialog" aria-modal="true" aria-labelledby="sm-code">
+        <button class="sub-modal__close" data-close aria-label="ปิด">&times;</button>
+        <div class="sub-modal__head">
+            <div class="sub-modal__code" id="sm-code"></div>
+            <div class="sub-modal__title" id="sm-name"></div>
+        </div>
+        <div class="sub-modal__body">
+            <dl class="sub-modal__detail" id="sm-detail"></dl>
+        </div>
+    </div>
+</div>
 
 <script>
-    BOX_WIDTH = 60
-    BOX_HIGHT = 80
     conflictCheck = false
-    table_mode = "{{mode|safe}}"
+    table_mode  = "{{mode|safe}}"
     table_group = "{{group|safe}}"
-    var         time_list = ['','8.00-9.00','9.00-10.00','10.00-11.00','11.00-12.00','12.00-13.00',
-                    '13.00-14.00','14.00-15.00','15.00-16.00','16.00-17.00','17.00-18.00'
-                    ,'18.00-19.00','19.00-20.00','20.00-21.00']
-    var i;
-    table_id = document.getElementById("tab_main")
-    temp_str = ""
-    temp_str+='<div class="row">'
-    for(i=0;i<time_list.length;i++){
-        temp_str+='<div class="boxHead" >'+time_list[i]+'</div>'
-    }
-    temp_str += '</div>'
-    table_id.innerHTML += temp_str
 
-    day_data = {{day_data_list|safe}}
+    var day_data    = {{day_data_list|safe}}
+    var day_names   = ['Monday','Tuesday','Wednesday','Thursday','Friday']
+    var time_labels = ['8.00-9.00','9.00-10.00','10.00-11.00','11.00-12.00','12.00-13.00',
+                       '13.00-14.00','14.00-15.00','15.00-16.00','16.00-17.00','17.00-18.00',
+                       '18.00-19.00','19.00-20.00','20.00-21.00']
+    var N_SLOTS  = 26;                            // half-hours from 8.00 to 21.00
+    var todayIdx = new Date().getDay() - 1;       // 0=Mon .. 4=Fri (-1 Sun / 5 Sat → no match)
 
-    function addrow(num_row,rowText){
-        var i
-        temp_str = ""
-        temp_str += '<div class="row" id=row'+String(num_row)+'>'
-        for(i=0;i< time_list.length*2-1;i++){
-            if(i==0) {
-                temp_str += '<div class="boxHead" id = row'+String(num_row)+'-'+String(i)+'>'+rowText+'</div>'
-                continue;
-            }
-            temp_str += '<div class="boxSub"  id = row'+String(num_row)+'-'+String(i)+'></div>'
-        }
-        table_id.innerHTML += temp_str
-        lastRow ++  
+    // "8.30" -> 8.5, then -> half-hour slot index (8.00 = 0 ... 21.00 = 26)
+    function toSlot(t){
+        t = parseFloat(t)
+        var frac = Math.round((t - Math.floor(t)) * 100)
+        if(frac == 30) t = Math.floor(t) + 0.5
+        return Math.round((t - 8) * 2)
     }
-    function fillTime(num_row,sub_data,day_text){
-        var i
-        timeSplit = sub_data['time'].split('-')
-        if(timeSplit.length<=1) return false;
-        //Convert 8.00-19.00 to 1-23
-        for(i=0;i<2;i++){
-            timeSplit[i] = parseFloat(timeSplit[i])
-            if((timeSplit[i]*10)%10 == 3) timeSplit[i] += 0.2;
-            timeSplit[i] = parseInt(((timeSplit[i]-8)*2)+1)
-        }
-       fillTab(timeSplit,num_row,sub_data,day_text)
+    function esc(x){
+        return String(x == null ? '' : x)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
     }
-    function fillTab(timeSplit,num_row,sub_data,day_text){
-        var cur_row_id = 'row'+String(num_row)
-        var cur_row = document.getElementById(cur_row_id)
-        for(i=timeSplit[0] ; i<timeSplit[1] ; i++){
-            var cur_col_id = cur_row_id+'-'+String(i)
-            let cur_col = document.getElementById(cur_col_id)
-            if(cur_col == null){
-                conflictCheck = true
-                if(document.getElementById('row'+String(num_row+1))==null) addrow(num_row+1,day_text);
-                fillTab(timeSplit,num_row+1,sub_data)
-                return;
-            }
-            if(cur_col.innerText==null){
-                conflictCheck = true
-                if(document.getElementById('row'+String(num_row+1))==null) addrow(num_row+1,day_text);
-                fillTab(timeSplit,num_row+1,sub_data)
-                return;
-            }
-            else if(cur_col.innerText!= ""){
-                conflictCheck = true
-                if(document.getElementById('row'+String(num_row+1))==null) addrow(num_row+1,day_text);
-                fillTab(timeSplit,num_row+1,sub_data)
-                return;
-            }
-        }
-        timeDiff = timeSplit[1]-timeSplit[0]
-        for(i=timeSplit[0] ; i<timeSplit[1] ; i++){
-            var cur_col_id = cur_row_id+'-'+String(i)
-            var cur_col = document.getElementById(cur_col_id)
-            
-            if(i==timeSplit[0]){
-                cur_col.style.width = ''+String(timeDiff*BOX_WIDTH)+'px'
-                cur_col.innerHTML += sub_data['code']+' sec: '+sub_data["sec"]+'<br><small>'+sub_data["name"]+
-                                    '<br>'+sub_data["lecturer"]+' '+sub_data["room"]+'</small>';
-                cur_col.style.border = "2px solid black"
-                if(sub_data["student_type"].search('XE') != -1){
-                    cur_col.style.backgroundColor = "rgb(253, 255, 154)"
-                }
-                else if(sub_data["sec"].length < 3){
-                    cur_col.style.backgroundColor = "cyan"
-                }
-                else if(sub_data["sec"][0]==2){
-                    cur_col.style.backgroundColor = "lightgreen"
-                }
-                else if(sub_data["sec"][0] == 4){
-                    cur_col.style.backgroundColor = "pink"
-                }
-            }
-            else {
-                cur_col.remove()
-            }
-        }
+    function category(c){
+        if(String(c.student_type).search('XE') != -1) return 'cat-grad'
+        if(String(c.sec).length < 3)                  return 'cat-normal'
+        if(String(c.sec)[0] == '2')                   return 'cat-special'
+        if(String(c.sec)[0] == '4')                   return 'cat-iup'
+        return ''
     }
-    var lastRow = 0;
-    day_dict = {0:'Monday',1:'Tuesday',2:'Wednesday',3:'Thursday',4:'Friday'}
-    for(n_day = 0;n_day<day_data.length;n_day++){
-        addrow(lastRow+1,day_dict[n_day])
-        currRow = lastRow
-        for(n_sub=0;n_sub<day_data[n_day].length;n_sub++){
-            fillTime(lastRow, day_data[n_day][n_sub] ,day_dict[n_day])
+
+    // Assign each class to a lane (sub-row). First-fit over lanes sorted by start time;
+    // needing a lane beyond the first means a time overlap → a conflict.
+    function buildLanes(classes){
+        var items = []
+        for(var i=0;i<classes.length;i++){
+            var c = classes[i]
+            var parts = String(c.time).split('-')
+            if(parts.length < 2) continue
+            var s = toSlot(parts[0]), e = toSlot(parts[1])
+            if(isNaN(s) || isNaN(e)) continue
+            if(s < 0) s = 0
+            if(e > N_SLOTS) e = N_SLOTS
+            if(e <= s) continue
+            items.push({c:c, s:s, e:e})
         }
-        document.getElementById('row'+String(currRow)+'-0').style.borderBottomStyle = "None"
-        for(rowdel=currRow+1;rowdel<=lastRow;rowdel++){
-            if(rowdel!=lastRow) document.getElementById('row'+String(rowdel)+'-0').style.borderBottomStyle = "None";
-            document.getElementById('row'+String(rowdel)+'-0').style.borderTopStyle = "None"
-            document.getElementById('row'+String(rowdel)+'-0').innerText=""
+        items.sort(function(a,b){ return a.s - b.s || a.e - b.e })
+        var laneEnds = []                          // laneEnds[k] = end slot of lane k's last class
+        for(var i=0;i<items.length;i++){
+            var placed = false
+            for(var k=0;k<laneEnds.length;k++){
+                if(laneEnds[k] <= items[i].s){ items[i].lane = k; laneEnds[k] = items[i].e; placed = true; break }
+            }
+            if(!placed){
+                items[i].lane = laneEnds.length
+                if(laneEnds.length >= 1) conflictCheck = true
+                laneEnds.push(items[i].e)
+            }
         }
-        document.getElementById('row'+String(currRow)+'-0').style.lineHeight = String(BOX_HIGHT*(lastRow-currRow+1))+"px"
+        return { items:items, laneCount:Math.max(1, laneEnds.length) }
     }
-    document.getElementById("row"+String(currRow)+'-0').style.borderBottom = "1px solid blue"
+
+    var SUBS = []                                  // flat list of class data, indexed by card
+    var html = ''
+    // ── time header (row 1) ──
+    html += '<div class="boxHead corner"></div>'
+    for(var k=0;k<time_labels.length;k++){
+        html += '<div class="boxHead" style="grid-row:1;grid-column:'+(2+2*k)+' / span 2;">'+time_labels[k]+'</div>'
+    }
+
+    // ── one block of lane rows per day ──
+    var row = 2                                    // row 1 is the header
+    for(var d=0; d<day_data.length; d++){
+        var built = buildLanes(day_data[d])
+        var L = built.laneCount
+
+        // day label spans all of this day's lanes
+        var todayCls = (d == todayIdx) ? ' today' : ''
+        html += '<div class="boxDay'+todayCls+'" style="grid-row:'+row+' / span '+L+';">'+day_names[d]+'</div>'
+
+        // empty slot cells → gridlines (last lane row gets a stronger day-divider border)
+        for(var li=0; li<L; li++){
+            var endCls = (li == L-1) ? ' dayend' : ''
+            for(var s=0; s<N_SLOTS; s++){
+                html += '<div class="boxSub'+endCls+'" style="grid-row:'+(row+li)+';grid-column:'+(2+s)+';"></div>'
+            }
+        }
+
+        // class cards placed on top, spanning their time range
+        for(var i=0;i<built.items.length;i++){
+            var it = built.items[i], c = it.c
+            var idx = SUBS.push(c) - 1
+            html += '<div class="filled '+category(c)+'" data-idx="'+idx+'"'
+                  +  ' style="grid-row:'+(row+it.lane)+';grid-column:'+(2+it.s)+' / '+(2+it.e)+';"'
+                  +  ' title="'+esc(c.code)+' sec '+esc(c.sec)+' · '+esc(c.name)+' · อ.'+esc(c.lecturer)+' · '+esc(c.room)+'">'
+                  +  esc(c.code)+' sec: '+esc(c.sec)+'<br><small>'+esc(c.name)+'<br>'+esc(c.lecturer)+' '+esc(c.room)+'</small></div>'
+        }
+
+        row += L
+    }
+
+    document.getElementById('tab_main').innerHTML = html
+
+    // ── click a class card → detail popup ──
+    var subModal = document.getElementById('sub-modal')
+    // .shell keeps a (identity) transform from its fade-up animation, which traps
+    // position:fixed inside it → move the modal to <body> so it centres on the viewport.
+    document.body.appendChild(subModal)
+    function openSub(c){
+        document.getElementById('sm-code').textContent = (c.code||'') + '   sec ' + (c.sec||'')
+        document.getElementById('sm-name').textContent = c.name || ''
+        var rows = [
+            ['หน่วยกิต',       c.credit],
+            ['อาจารย์ผู้สอน',  c.lecturer ? 'อ. '+c.lecturer : ''],
+            ['ห้อง',          c.room + (c.room2 && c.room2!='-' ? ', '+c.room2 : '')],
+            ['วัน-เวลา',       [c.day, c.time, (c.day2&&c.day2!='-')?c.day2:'', (c.time2&&c.time2!='-')?c.time2:''].filter(Boolean).join(' ')],
+            ['จำนวนรับ',       c.amount],
+            ['กลุ่มนิสิต',      c.student_type],
+            ['ภาคเรียน',       c.term]
+        ]
+        var dl = document.getElementById('sm-detail'); dl.innerHTML = ''
+        for(var r=0;r<rows.length;r++){
+            var v = rows[r][1]
+            if(v == null || v === '') continue
+            dl.innerHTML += '<dt>'+esc(rows[r][0])+'</dt><dd>'+esc(v)+'</dd>'
+        }
+        subModal.hidden = false
+    }
+    function closeSub(){ subModal.hidden = true }
+    document.getElementById('tab_main').addEventListener('click', function(e){
+        var card = e.target.closest('.filled')
+        if(!card) return
+        var idx = parseInt(card.getAttribute('data-idx'), 10)
+        if(!isNaN(idx) && SUBS[idx]) openSub(SUBS[idx])
+    })
+    subModal.addEventListener('click', function(e){ if(e.target.hasAttribute('data-close')) closeSub() })
+    document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeSub() })
 
 </script>
-<br></br>
-<table>
-<tr><td><div style="width: 20px; height: 20px; border: 1px solid black; background-color: cyan;"></div></td>
-<td>ภาคปกติ</td>
-<td></td>
-<td><div style="width: 20px; height: 20px; border: 1px solid black; background-color:lightgreen;"></div></td>
-<td>ภาคพิเศษ</td>
-<td></td>
-<td><div style="width: 20px; height: 20px; border: 1px solid black; background-color: pink;"></div></td>
-<td>IUP</td>
-<td><div style="width: 20px; height: 20px; border: 1px solid black; background-color: rgb(253, 255, 154);"></div></td>
-<td>ป.โท-เอก</td>
-<tr>
-</table>
-<br></br>
-<table class = "table table-bordered table-sm small table-fixed">
+
+<div class="legend">
+    <span class="item"><span class="swatch" style="background:var(--cat-normal-fill); border-left-color:var(--cat-normal-bar);"></span>ภาคปกติ</span>
+    <span class="item"><span class="swatch" style="background:var(--cat-special-fill); border-left-color:var(--cat-special-bar);"></span>ภาคพิเศษ</span>
+    <span class="item"><span class="swatch" style="background:var(--cat-iup-fill); border-left-color:var(--cat-iup-bar);"></span>IUP</span>
+    <span class="item"><span class="swatch" style="background:var(--cat-grad-fill); border-left-color:var(--cat-grad-bar);"></span>ป.โท-เอก</span>
+</div>
+
+<table class = "table table-bordered table-sm small table-fixed tt-data">
     <thead><tr>
         <td>รหัสวิชา</td>
         <td>ชื่อวิชา</td>

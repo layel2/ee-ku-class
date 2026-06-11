@@ -6,44 +6,47 @@
     pageName = "nav-sum"
 </script>
 
-<h4> สรุปภาระงาน</h4>
+<p class="eyebrow">Teaching Load</p>
+<h2 class="page-title">สรุปภาระงาน</h2>
+<p class="page-lede">สรุปภาระการสอนของอาจารย์ — แยกตามภาคการศึกษา ปี และกลุ่มหมู่เรียน</p>
 
+<div class="panel" style="margin-bottom:30px">
 <form method="post" class="form-inline">
     {% csrf_token %}
     <div class="form-group mx-sm-3 mb-2">
-        <label class="control-label">อาจารย์ &nbsp;</label>
-    <select class="form-control" id="lecturer" name="lecturer">
+        <label class="control-label">อาจารย์</label>
+        <select class="form-control" id="lecturer" name="lecturer">
             <option value="all">ทั้งหมด</option>
-        {% for lec in teacher|dictsort:"lecturer_name" %}
+            {% for lec in teacher|dictsort:"lecturer_name" %}
             <option value="{{lec.lecturer_id}}">{{ lec }}</option>
-        {% endfor %}
-    </select>
+            {% endfor %}
+        </select>
     </div>
-<div class="form-group mx-sm-3 mb-2">
-    <label class="control-label">ปี &nbsp;</label>
-    <input class="form-control" type="text" id="year" name="year" size="5" required>
-</div>
-<div class="form-group mx-sm mb-2">
-    <label class="control-label">ภาค &nbsp;</label>
-<select id="term" class="custom-select" name="term">
-    <option value="all">ทุกภาคการศึกษา</option>
-    <option value="1">ภาคต้น</option>
-    <option value="2">ภาคปลาย</option>
-    <option value="3">ภาคฤดูร้อน</option>
-</select>
-</div>
-<div class="form-group mx-sm-3 mb-2">
-    <label class="control-label">หมู่ &nbsp;</label>
-    <select class="form-control" id="group" name="group">
-        <option value="all">ทั้งหมด</option>
-        <option value="normal">ภาคปกติ</option>
-        <option value="special">ภาคพิเศษ</option>
-        <option value="iup">IUP</option>
-    </select>
-</div>
+    <div class="form-group mx-sm-3 mb-2">
+        <label class="control-label">ปีการศึกษา</label>
+        <input class="form-control" type="text" id="year" name="year" size="5" placeholder="2566" required>
+    </div>
+    <div class="form-group mx-sm mb-2">
+        <label class="control-label">ภาค</label>
+        <select id="term" class="custom-select" name="term">
+            <option value="all">ทุกภาคการศึกษา</option>
+            <option value="1">ภาคต้น</option>
+            <option value="2">ภาคปลาย</option>
+            <option value="3">ภาคฤดูร้อน</option>
+        </select>
+    </div>
+    <div class="form-group mx-sm-3 mb-2">
+        <label class="control-label">หมู่</label>
+        <select class="form-control" id="group" name="group">
+            <option value="all">ทั้งหมด</option>
+            <option value="normal">ภาคปกติ</option>
+            <option value="special">ภาคพิเศษ</option>
+            <option value="iup">IUP</option>
+        </select>
+    </div>
     <button class="btn btn-primary mb-2" type="submit">Search</button>
-
-  </form>
+</form>
+</div>
 
 {% if prev_data %}
     <script>
@@ -90,9 +93,9 @@
             lec_name[0].innerText = lec_tab
             for(i=1;i<lnn;i++){
                 lec_name[1].remove()
-            } 
+            }
         </script>
-        
+
     {% elif mode is 1 %}
         {% for sub_data in data %}
             {% for i in sub_data %}
@@ -124,13 +127,10 @@
     {% endif %}
 </table>
 {% else %}
-<p>Please login to see this page.</p>
+<p class="notice">Please login to see this page.</p>
 <script>
-   //alert("Please login to access this page")
    location.replace("accounts/login")
 </script>
-
-
 {% endif %}
 
 {% endblock content %}

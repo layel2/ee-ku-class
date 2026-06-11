@@ -47,11 +47,16 @@
     }
 </script>
 
+<p class="eyebrow">Timetable Index</p>
+<h2 class="page-title">เลือกดูตารางเรียน</h2>
+<p class="page-lede">เลือกภาคการศึกษาและประเภทตารางที่ต้องการ — แยกตามนิสิต ผู้สอน รายวิชา หรือห้องเรียน</p>
+
+<div class="panel">
 <form method='POST'>
     {% csrf_token %}
     <div class="row">
         <div class="col">
-            <label>Semester :</label>
+            <label>Semester / ภาคการศึกษา</label>
             <select  id="sem" name="sem" class="custom-select" onchange="logg()">
                 {% for sem in semester %}
                     <option value='{{sem}}'>{{ sem }}</option>
@@ -60,7 +65,7 @@
         </div>
 
         <div class="col">
-            <label class="control-label">Search for :</label>
+            <label class="control-label">Search for / ค้นหาจาก</label>
             <select id="type" name="type" class="custom-select" onchange="logg()">
                 <option value="student">สำหรับนิสิต</option>
                 <option value="teacher">ผู้สอน</option>
@@ -69,8 +74,9 @@
             </select>
         </div>
     </div>
-    <p></p>
-    <label class="control-label">Detail :</label>
+
+    <div style="margin-top:22px">
+    <label class="control-label">Detail / รายละเอียด</label>
     <div class="row">
         <div class="col">
             <div id="add_selected"></div>
@@ -79,13 +85,14 @@
             <div id="add_selected_2"></div>
         </div>
             <script>logg()</script>
-        
     </div>
-    <div class="row-2">
-        <br>
-        <button type="submit" class="form-control btn btn-primary" id="tab-btn">Search</button>
+    </div>
+
+    <div class="row-2" style="margin-top:26px">
+        <button type="submit" class="btn btn-primary" id="tab-btn">Search Timetable</button>
     </div>
 
 </form>
+</div>
 
 {% endblock content %}
