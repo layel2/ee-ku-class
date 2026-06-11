@@ -10,8 +10,8 @@ from datetime import datetime
 # Create your views here.
 def main(request):
 
-    if(request.method == 'POST'):
-        in_data = request.POST.copy()
+    if('type' in request.GET):
+        in_data = request.GET.copy()
         data_out = None
         data_group = None
         if(in_data['type']=='student'):

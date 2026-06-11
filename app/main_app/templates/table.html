@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 .grid-scroll{
-    overflow-x:auto;
+    overflow:auto;                       /* scroll on BOTH axes inside the box */
+    max-height:calc(100vh - 160px);      /* height cap → this box is the scrollport,
+                                            so the sticky time header + day column freeze */
     background:#fff;
     border:1px solid var(--rule-soft);
     border-radius:var(--radius);
@@ -134,20 +136,47 @@
     50%{ opacity:.55; }
 }
 
-/* legend */
-.legend{
+/* filter bar — interactive category chips + search (also serves as the legend) */
+.tt-filters{
     display:flex;
     flex-wrap:wrap;
-    gap:14px 26px;
     align-items:center;
-    margin:22px 0 26px;
+    gap:10px 14px;
+    margin:22px 0 18px;
+}
+#cat-chips{ display:flex; flex-wrap:wrap; gap:10px 12px; }
+.chip{
+    display:inline-flex;
+    align-items:center;
+    gap:9px;
+    cursor:pointer;
     font-family:var(--mono);
     font-size:12px;
     letter-spacing:.04em;
     color:var(--ink-soft);
+    background:#fff;
+    border:1px solid var(--rule);
+    border-radius:999px;
+    padding:6px 14px;
+    transition:opacity .14s ease, border-color .14s ease, box-shadow .14s ease;
 }
-.legend .item{ display:inline-flex; align-items:center; gap:9px; }
-.legend .swatch{ width:22px; height:14px; border-radius:3px; border-left:4px solid; flex:0 0 auto; }
+.chip .swatch{ width:22px; height:14px; border-radius:3px; border-left:4px solid; flex:0 0 auto; }
+.chip[aria-pressed="false"]{ opacity:.4; }
+.chip[aria-pressed="false"] .label{ text-decoration:line-through; }
+.tt-search{
+    margin-left:auto;
+    font-family:var(--sans);
+    font-size:13px;
+    color:var(--ink);
+    background:#fff;
+    border:1px solid var(--rule);
+    border-radius:999px;
+    padding:7px 16px;
+    min-width:220px;
+    transition:border-color .14s ease, box-shadow .14s ease;
+}
+.tt-search:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(138,43,43,.12); }
+.tt-search::placeholder{ color:var(--ink-faint); }
 
 /* this table HAS a <thead>, so base.html's shared `tr:first-child td` rule would
    wrongly style the first body row like a header too — reset it back to a data row */
@@ -192,7 +221,7 @@ table.tt-data tbody tr:first-child:hover td{ background:rgba(138,43,43,.06); }
 .sub-modal__detail dd{ margin:0; color:var(--ink); }
 
 @media print{
-    .grid-scroll{ width:auto; margin:0; overflow:visible; box-shadow:none; border:1px solid var(--rule); }
+    .grid-scroll{ width:auto; margin:0; overflow:visible; max-height:none; box-shadow:none; border:1px solid var(--rule); }
     .box-container{ min-width:0; }
     .boxHead, .boxDay{ position:static; }
     .filled{ box-shadow:none; }
@@ -204,6 +233,11 @@ table.tt-data tbody tr:first-child:hover td{ background:rgba(138,43,43,.06); }
 <p class="eyebrow">Weekly Schedule</p>
 <h2 class="page-title">ตาราง {{group}}</h2>
 <h2 id="conflict-alert" class="blinking"></h2>
+
+<div class="tt-filters">
+    <div id="cat-chips"></div>
+    <input type="search" id="tt-search" class="tt-search" placeholder="ค้นหา รหัสวิชา / ชื่อ / อาจารย์ / ห้อง" autocomplete="off">
+</div>
 
 <div class="grid-scroll">
 <div class="box-container" id = "tab_main">
@@ -366,13 +400,6 @@ table.tt-data tbody tr:first-child:hover td{ background:rgba(138,43,43,.06); }
 
 </script>
 
-<div class="legend">
-    <span class="item"><span class="swatch" style="background:var(--cat-normal-fill); border-left-color:var(--cat-normal-bar);"></span>ภาคปกติ</span>
-    <span class="item"><span class="swatch" style="background:var(--cat-special-fill); border-left-color:var(--cat-special-bar);"></span>ภาคพิเศษ</span>
-    <span class="item"><span class="swatch" style="background:var(--cat-iup-fill); border-left-color:var(--cat-iup-bar);"></span>IUP</span>
-    <span class="item"><span class="swatch" style="background:var(--cat-grad-fill); border-left-color:var(--cat-grad-bar);"></span>ป.โท-เอก</span>
-</div>
-
 <table class = "table table-bordered table-sm small table-fixed tt-data">
     <thead><tr>
         <td>รหัสวิชา</td>
@@ -404,6 +431,60 @@ table.tt-data tbody tr:first-child:hover td{ background:rgba(138,43,43,.06); }
     else if(table_mode=='teacher' && conflictCheck == true){
         document.getElementById("conflict-alert").innerText = table_group + "มีการทับซ้อนของตารางเรียน"
     }
+
+    // ── category filter chips + search (runs after the grid + data table exist) ──
+    (function(){
+        var catLabel = { 'cat-normal':'ภาคปกติ', 'cat-special':'ภาคพิเศษ', 'cat-iup':'IUP', 'cat-grad':'ป.โท-เอก' }
+        var catOrder = ['cat-normal','cat-special','cat-iup','cat-grad']
+
+        var cards = Array.prototype.slice.call(document.querySelectorAll('#tab_main .filled'))
+        var rows  = Array.prototype.slice.call(document.querySelectorAll('table.tt-data tbody tr'))
+
+        // tag each data row with its category, reusing the grid's category() logic
+        rows.forEach(function(tr){
+            var c = tr.children
+            if(c.length < 6) return
+            tr.setAttribute('data-cat', category({ sec:c[2].textContent.trim(), student_type:c[5].textContent.trim() }))
+        })
+
+        // build a chip only for categories that actually appear
+        var present = {}
+        cards.forEach(function(el){ catOrder.forEach(function(k){ if(el.classList.contains(k)) present[k]=true }) })
+        rows.forEach(function(tr){ var k=tr.getAttribute('data-cat'); if(k) present[k]=true })
+
+        var active = {}, chipHtml = ''
+        catOrder.forEach(function(k){
+            if(!present[k]) return
+            active[k] = true
+            chipHtml += '<button type="button" class="chip" aria-pressed="true" data-cat="'+k+'">'
+                     +  '<span class="swatch" style="background:var(--'+k+'-fill);border-left-color:var(--'+k+'-bar);"></span>'
+                     +  '<span class="label">'+catLabel[k]+'</span></button>'
+        })
+        var chipBox  = document.getElementById('cat-chips')
+        var searchEl = document.getElementById('tt-search')
+        chipBox.innerHTML = chipHtml
+
+        function cardCat(el){
+            for(var i=0;i<catOrder.length;i++){ if(el.classList.contains(catOrder[i])) return catOrder[i] }
+            return ''                                  // uncategorized → not chip-filtered
+        }
+        function applyFilters(){
+            var q = (searchEl.value || '').trim().toLowerCase()
+            function show(text, cat){ return ((!cat) || active[cat]) && (q === '' || text.toLowerCase().indexOf(q) !== -1) }
+            cards.forEach(function(el){ el.style.display = show(el.textContent, cardCat(el)) ? '' : 'none' })
+            rows.forEach(function(tr){ tr.style.display  = show(tr.textContent, tr.getAttribute('data-cat')) ? '' : 'none' })
+        }
+
+        chipBox.addEventListener('click', function(e){
+            var chip = e.target.closest('.chip')
+            if(!chip) return
+            var k = chip.getAttribute('data-cat')
+            active[k] = !active[k]
+            chip.setAttribute('aria-pressed', active[k] ? 'true' : 'false')
+            applyFilters()
+        })
+        searchEl.addEventListener('input', applyFilters)
+    })();
 </script>
 
 {% endblock content %}
